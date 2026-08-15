@@ -1,0 +1,16 @@
+{
+  "name": "OpenCast — Fishing Intelligence",
+  "short_name": "OpenCast",
+  "description": "Free, open-source fishing forecasts, spot mapping, and catch logging.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "id": "./index.html",
+  "display": "standalone",
+  "background_color": "#0a1719",
+  "theme_color": "#0a1719",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "./icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "./icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

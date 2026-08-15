@@ -1,0 +1,1837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>OpenCast — Free, Open-Source Fishing Intelligence</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#0a1719">
+<link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+<link rel="apple-touch-icon" href="./apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="OpenCast">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+  :root{
+    --bg:#0a1719; --bg-alt:#0d1f22; --surface:#122a2d; --surface-2:#173338;
+    --border:#1f4146; --border-soft:#173338;
+    --text:#dfe9e6; --text-dim:#8ea6a2; --text-faint:#5d7672;
+    --amber:#e8934a; --amber-dim:#8a5a30;
+    --blue:#4fa3c4; --blue-dim:#2f6478;
+    --green:#6fb07a; --red:#d9705f;
+    --radius:12px; --radius-sm:8px;
+    --font-display:'Space Grotesk',sans-serif;
+    --font-body:'Inter',system-ui,-apple-system,sans-serif;
+    --font-mono:'IBM Plex Mono',monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg); color:var(--text); font-family:var(--font-body);
+    -webkit-font-smoothing:antialiased; min-height:100vh; padding-bottom:76px;
+  }
+  ::selection{background:var(--amber-dim); color:var(--text);}
+  a{color:var(--blue);}
+  button{font-family:var(--font-body); cursor:pointer;}
+  input,select,textarea{font-family:var(--font-body);}
+  :focus-visible{outline:2px solid var(--amber); outline-offset:2px;}
+
+  /* ---------- Header ---------- */
+  header.app-header{
+    padding:18px 20px 14px; border-bottom:1px solid var(--border-soft);
+    display:flex; flex-direction:column; gap:12px; position:sticky; top:0;
+    background:rgba(10,23,25,0.92); backdrop-filter:blur(8px); z-index:40;
+  }
+  .brand{display:flex; align-items:center; gap:10px;}
+  .brand svg{flex-shrink:0;}
+  .brand-text h1{font-family:var(--font-display); font-size:19px; margin:0; font-weight:700; letter-spacing:0.2px;}
+  .brand-text p{margin:0; font-size:11.5px; color:var(--text-faint); font-family:var(--font-mono); letter-spacing:0.3px;}
+
+  .loc-row{display:flex; gap:8px; position:relative;}
+  .loc-row input[type=text]{
+    flex:1; background:var(--surface); border:1px solid var(--border); color:var(--text);
+    padding:10px 12px; border-radius:var(--radius-sm); font-size:14px;
+  }
+  .loc-row input::placeholder{color:var(--text-faint);}
+  .btn{
+    background:var(--surface-2); border:1px solid var(--border); color:var(--text);
+    padding:10px 14px; border-radius:var(--radius-sm); font-size:13.5px; font-weight:500;
+    white-space:nowrap; transition:border-color .15s, background .15s;
+  }
+  .btn:hover{border-color:var(--blue-dim); background:#1a3a3f;}
+  .btn.primary{background:var(--amber); border-color:var(--amber); color:#1a1108; font-weight:600;}
+  .btn.primary:hover{background:#f0a15e;}
+  .btn.ghost{background:transparent;}
+  .btn.small{padding:6px 10px; font-size:12.5px;}
+  .btn.danger{color:var(--red); border-color:#4a2620;}
+  .btn:disabled{opacity:0.5; cursor:default;}
+
+  .loc-results{
+    position:absolute; top:calc(100% + 6px); left:0; right:0; background:var(--surface-2);
+    border:1px solid var(--border); border-radius:var(--radius-sm); overflow:hidden; z-index:50;
+    box-shadow:0 12px 24px rgba(0,0,0,0.4);
+  }
+  .loc-results button{
+    display:block; width:100%; text-align:left; background:none; border:none; color:var(--text);
+    padding:10px 12px; font-size:13.5px; border-bottom:1px solid var(--border-soft);
+  }
+  .loc-results button:last-child{border-bottom:none;}
+  .loc-results button:hover{background:var(--surface);}
+  .loc-results button small{display:block; color:var(--text-faint); font-family:var(--font-mono); font-size:11px; margin-top:2px;}
+  .current-loc{font-family:var(--font-mono); font-size:12px; color:var(--text-dim); display:flex; align-items:center; gap:6px;}
+  .current-loc .dot{width:6px;height:6px;border-radius:50%;background:var(--green);}
+
+  /* ---------- Tabs ---------- */
+  nav.tabs{
+    display:flex; position:fixed; bottom:0; left:0; right:0; background:var(--bg-alt);
+    border-top:1px solid var(--border-soft); z-index:40; padding:6px 6px calc(6px + env(safe-area-inset-bottom));
+  }
+  nav.tabs button{
+    flex:1; background:none; border:none; color:var(--text-faint); display:flex; flex-direction:column;
+    align-items:center; gap:3px; padding:8px 4px; border-radius:var(--radius-sm); font-size:10.5px; font-weight:500;
+  }
+  nav.tabs button.active{color:var(--amber);}
+  nav.tabs button svg{width:20px; height:20px;}
+
+  @media(min-width:860px){
+    body{padding-bottom:0;}
+    nav.tabs{
+      position:sticky; top:97px; flex-direction:row; width:auto; border-top:none; border-bottom:1px solid var(--border-soft);
+      padding:0 20px; background:var(--bg); justify-content:flex-start; gap:4px;
+    }
+    nav.tabs button{flex:none; flex-direction:row; padding:12px 16px; font-size:13px;}
+  }
+
+  main{max-width:920px; margin:0 auto; padding:18px 16px 40px;}
+  .tabpanel{display:none;}
+  .tabpanel.active{display:block; animation:fadein .25s ease;}
+  @keyframes fadein{from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);}}
+
+  h2.section-title{font-family:var(--font-display); font-size:15px; font-weight:600; margin:26px 0 12px; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.6px;}
+  h2.section-title:first-child{margin-top:0;}
+
+  .card{background:var(--surface); border:1px solid var(--border-soft); border-radius:var(--radius); padding:16px;}
+  .card + .card{margin-top:10px;}
+
+  /* ---------- Score Hero ---------- */
+  .hero{
+    position:relative; border-radius:var(--radius); overflow:hidden; background:var(--bg-alt);
+    border:1px solid var(--border-soft); padding:22px 18px; display:flex; align-items:center; gap:20px;
+  }
+  .hero-contours{position:absolute; inset:0; opacity:0.35; pointer-events:none;}
+  .hero-inner{position:relative; z-index:1; display:flex; align-items:center; gap:20px; width:100%; flex-wrap:wrap;}
+  .gauge-wrap{width:120px; height:120px; flex-shrink:0; position:relative;}
+  .gauge-wrap svg{transform:rotate(-90deg);}
+  .gauge-track{fill:none; stroke:var(--border); stroke-width:10;}
+  .gauge-fill{fill:none; stroke-width:10; stroke-linecap:round; transition:stroke-dashoffset .6s ease;}
+  .gauge-num{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;}
+  .gauge-num .n{font-family:var(--font-display); font-size:30px; font-weight:700;}
+  .gauge-num .l{font-family:var(--font-mono); font-size:9.5px; color:var(--text-faint); letter-spacing:0.5px; margin-top:-2px;}
+  .hero-meta{flex:1; min-width:180px;}
+  .hero-meta .band{font-family:var(--font-display); font-size:20px; font-weight:700; margin-bottom:4px;}
+  .hero-meta .sub{font-size:13px; color:var(--text-dim); line-height:1.5;}
+  .hero-meta .window{
+    display:inline-flex; align-items:center; gap:6px; margin-top:10px; font-family:var(--font-mono);
+    font-size:12px; background:var(--surface-2); border:1px solid var(--border); padding:5px 10px; border-radius:20px; color:var(--amber);
+  }
+
+  /* ---------- condition chips ---------- */
+  .chip-row{display:flex; gap:8px; flex-wrap:wrap; margin-top:14px;}
+  .chip{
+    background:var(--surface-2); border:1px solid var(--border); border-radius:var(--radius-sm);
+    padding:9px 11px; min-width:84px; text-align:center;
+  }
+  .chip .v{font-family:var(--font-mono); font-size:15px; font-weight:500;}
+  .chip .k{font-size:10px; color:var(--text-faint); text-transform:uppercase; letter-spacing:0.4px; margin-top:2px;}
+
+  /* ---------- day/hour strip ---------- */
+  .day-tabs{display:flex; gap:6px; overflow-x:auto; padding-bottom:4px; margin-top:4px;}
+  .day-tabs button{
+    flex-shrink:0; background:var(--surface); border:1px solid var(--border-soft); color:var(--text-dim);
+    padding:9px 13px; border-radius:20px; font-size:12.5px; font-family:var(--font-mono);
+  }
+  .day-tabs button.active{background:var(--amber); border-color:var(--amber); color:#1a1108; font-weight:600;}
+  .hour-bars{display:flex; align-items:flex-end; gap:3px; height:90px; margin-top:14px; overflow-x:auto;}
+  .hour-bar{flex-shrink:0; width:14px; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%; gap:4px;}
+  .hour-bar .bar{width:100%; border-radius:3px 3px 0 0; min-height:3px;}
+  .hour-bar .lbl{font-size:8.5px; color:var(--text-faint); font-family:var(--font-mono); transform:rotate(0deg);}
+
+  details.methodology{margin-top:14px; font-size:12.5px; color:var(--text-dim);}
+  details.methodology summary{cursor:pointer; color:var(--blue); font-family:var(--font-mono); font-size:12px;}
+  details.methodology p{line-height:1.6;}
+
+  /* ---------- moon card ---------- */
+  .moon-row{display:flex; align-items:center; gap:16px;}
+  .moon-row svg{flex-shrink:0;}
+  .moon-info .name{font-family:var(--font-display); font-weight:600; font-size:15px;}
+  .moon-info .pct{font-family:var(--font-mono); font-size:12px; color:var(--text-dim); margin-top:2px;}
+
+  /* ---------- Map tab: full-bleed ---------- */
+  body.map-mode header.app-header{display:none;}
+  body.map-mode main{padding:0; max-width:none;}
+  .map-tab{display:none;}
+  .map-tab.active{display:block; position:fixed; inset:0; z-index:20; background:var(--bg-alt); animation:none;}
+  @media(min-width:860px){
+    .map-tab.active{position:relative; inset:auto; height:calc(100vh - 190px); min-height:560px; margin-top:16px; border-radius:var(--radius); overflow:hidden; border:1px solid var(--border-soft);}
+    body.map-mode header.app-header{display:flex;}
+    body.map-mode main{padding:18px 16px 40px; max-width:920px;}
+  }
+  #map{position:absolute; inset:0; width:100%; height:100%; z-index:1; background:var(--bg-alt); touch-action:none;}
+  .leaflet-touch .leaflet-bar, .leaflet-control-zoom{display:none;}
+  @media(min-width:860px){.leaflet-control-zoom{display:block;}}
+
+  .map-top-float{position:absolute; top:14px; left:14px; right:14px; z-index:15; display:flex; justify-content:center;}
+  @media(min-width:860px){.map-top-float{top:12px;}}
+  .pill-btn{
+    background:rgba(18,42,45,0.92); backdrop-filter:blur(6px); border:1px solid var(--border);
+    color:var(--text); padding:11px 18px; border-radius:24px; font-size:13.5px; font-weight:600;
+    display:flex; align-items:center; gap:7px; box-shadow:0 6px 18px rgba(0,0,0,0.35);
+  }
+  .pill-btn svg{color:var(--green); flex-shrink:0;}
+  .pill-btn:active{transform:scale(0.97);}
+  .pill-btn.loading svg{animation:spin 1s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  .map-side-float{position:absolute; right:14px; bottom:120px; z-index:15; display:flex; flex-direction:column; gap:10px;}
+  .round-btn{
+    width:44px; height:44px; border-radius:50%; background:rgba(18,42,45,0.92); backdrop-filter:blur(6px);
+    border:1px solid var(--border); color:var(--text); display:flex; align-items:center; justify-content:center;
+    box-shadow:0 6px 16px rgba(0,0,0,0.35);
+  }
+  .round-btn.active{color:var(--blue); border-color:var(--blue-dim);}
+  .round-btn:active{transform:scale(0.94);}
+
+  .map-legend{
+    position:absolute; left:14px; bottom:120px; z-index:15; background:rgba(18,42,45,0.88); backdrop-filter:blur(6px);
+    border:1px solid var(--border); border-radius:var(--radius-sm); padding:8px 10px; font-size:10.5px;
+    color:var(--text-dim); display:flex; flex-direction:column; gap:5px; font-family:var(--font-mono);
+  }
+  .map-legend span{display:flex; align-items:center; gap:6px;}
+  .dot-sw{width:8px; height:8px; border-radius:50%; display:inline-block; flex-shrink:0;}
+
+  .sheet{
+    position:absolute; left:0; right:0; bottom:0; height:78%; max-height:78%;
+    background:var(--surface); border-radius:18px 18px 0 0; border-top:1px solid var(--border-soft);
+    box-shadow:0 -10px 30px rgba(0,0,0,0.4); z-index:16; display:flex; flex-direction:column;
+    transform:translateY(0); will-change:transform;
+  }
+  .sheet.anim{transition:transform .32s cubic-bezier(.2,.8,.2,1);}
+  @media(min-width:860px){.sheet{height:70%; max-height:70%;}}
+  .sheet-handle{width:38px; height:4px; background:var(--border); border-radius:2px; margin:10px auto 4px; flex-shrink:0;}
+  .sheet-header{padding:2px 14px 10px; border-bottom:1px solid var(--border-soft); flex-shrink:0; touch-action:none;}
+  .sheet-tabs{display:flex; gap:6px;}
+  .sheet-tab-btn{
+    flex:1; background:var(--surface-2); border:1px solid var(--border-soft); color:var(--text-faint);
+    padding:8px 6px; border-radius:20px; font-size:11.5px; font-weight:600; font-family:var(--font-mono);
+  }
+  .sheet-tab-btn span{opacity:0.75; margin-left:2px;}
+  .sheet-tab-btn.active{background:var(--surface); color:var(--amber); border-color:var(--amber-dim);}
+  .sheet-body{overflow-y:auto; -webkit-overflow-scrolling:touch; padding:12px 16px 30px; flex:1; touch-action:pan-y;}
+  .sheet-panel{display:none;}
+  .sheet-panel.active{display:block;}
+
+  .locate-dot-icon{width:18px; height:18px; border-radius:50%; background:var(--blue); border:3px solid #eaf6fb; box-shadow:0 0 0 4px rgba(79,163,196,0.35);}
+  .locate-pulse{position:absolute; inset:-14px; border-radius:50%; background:rgba(79,163,196,0.35); animation:locatePulse 2.2s ease-out infinite;}
+  @keyframes locatePulse{0%{transform:scale(0.4); opacity:0.8;} 100%{transform:scale(1.6); opacity:0;}}
+
+  .zone-marker{
+    width:26px; height:26px; display:flex; align-items:center; justify-content:center; border-radius:50% 50% 50% 0;
+    background:var(--green); transform:rotate(-45deg); box-shadow:0 3px 8px rgba(0,0,0,0.4); border:2px solid #16341c;
+  }
+  .zone-marker span{transform:rotate(45deg); font-size:12px;}
+  .popup-btn{
+    margin-top:8px; background:var(--amber); border:none; color:#1a1108; font-weight:600; font-size:12px;
+    padding:7px 12px; border-radius:16px; width:100%;
+  }
+  .popup-title{font-weight:700; font-size:13px; margin-bottom:2px;}
+  .popup-body{font-size:12px; color:#3a4a48; line-height:1.5;}
+
+  .map-hint{font-size:12px; color:var(--text-faint); margin-top:8px; font-family:var(--font-mono);}
+  .inline-form{background:var(--surface-2); border:1px solid var(--border); border-radius:var(--radius); padding:14px; margin-top:12px; display:none;}
+  .inline-form.open{display:block;}
+  .inline-form label{display:block; font-size:11.5px; color:var(--text-faint); text-transform:uppercase; letter-spacing:0.4px; margin:10px 0 5px;}
+  .inline-form label:first-child{margin-top:0;}
+  .inline-form input[type=text], .inline-form input[type=number], .inline-form input[type=datetime-local],
+  .inline-form select, .inline-form textarea{
+    width:100%; background:var(--bg-alt); border:1px solid var(--border); color:var(--text);
+    padding:9px 10px; border-radius:var(--radius-sm); font-size:14px;
+  }
+  .inline-form textarea{resize:vertical; min-height:56px;}
+  .checkline{display:flex; align-items:flex-start; gap:8px; margin-top:12px; font-size:12.5px; color:var(--text-dim);}
+  .checkline input{margin-top:3px;}
+  .form-actions{display:flex; gap:8px; margin-top:14px;}
+
+  .spot-list, .catch-list{margin-top:10px; display:flex; flex-direction:column; gap:8px;}
+  .list-item{background:var(--surface); border:1px solid var(--border-soft); border-radius:var(--radius-sm); padding:12px; display:flex; justify-content:space-between; gap:10px;}
+  .list-item .main{flex:1;}
+  .list-item .name{font-weight:600; font-size:14px; display:flex; align-items:center; gap:6px;}
+  .list-item .tag{font-family:var(--font-mono); font-size:9.5px; background:var(--blue-dim); color:#cfeaf4; padding:2px 6px; border-radius:8px;}
+  .list-item .tag.community{background:var(--amber-dim); color:#ffe1c2;}
+  .list-item .meta{font-size:12px; color:var(--text-dim); margin-top:3px; line-height:1.5;}
+  .list-item .actions{display:flex; flex-direction:column; gap:6px;}
+
+  .empty-state{text-align:center; padding:36px 16px; color:var(--text-faint);}
+  .empty-state svg{opacity:0.5; margin-bottom:10px;}
+  .empty-state p{font-size:13.5px; margin:0; line-height:1.6;}
+
+  /* ---------- Bait advisor ---------- */
+  .advisor-form .row2{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .result-block{margin-top:16px;}
+  .lure-grid{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px;}
+  @media(max-width:520px){.lure-grid{grid-template-columns:1fr;}}
+  .lure-card{background:var(--surface-2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px 12px;}
+  .lure-card .t{font-size:9.5px; text-transform:uppercase; letter-spacing:0.4px; color:var(--text-faint);}
+  .lure-card .v{font-size:14px; font-weight:600; margin-top:3px;}
+  .reasoning{margin-top:12px; font-size:13px; line-height:1.6; color:var(--text-dim); background:var(--bg-alt); border-left:2px solid var(--amber); padding:10px 12px; border-radius:0 var(--radius-sm) var(--radius-sm) 0;}
+
+  /* ---------- toast ---------- */
+  #toastWrap{position:fixed; bottom:80px; left:0; right:0; display:flex; flex-direction:column; align-items:center; gap:8px; z-index:100; pointer-events:none;}
+  @media(min-width:860px){#toastWrap{bottom:20px;}}
+  .toast{
+    background:var(--surface-2); border:1px solid var(--border); color:var(--text); font-size:13px;
+    padding:10px 16px; border-radius:24px; box-shadow:0 8px 20px rgba(0,0,0,0.4); opacity:0; transform:translateY(8px);
+    transition:opacity .25s, transform .25s;
+  }
+  .toast.show{opacity:1; transform:translateY(0);}
+  .toast.error{border-color:#4a2620; color:#f2b3a5;}
+
+  .rating-stars{display:flex; gap:4px;}
+  .rating-stars button{background:none; border:none; font-size:18px; color:var(--border); padding:0;}
+  .rating-stars button.on{color:var(--amber);}
+
+  .footer-note{margin-top:34px; text-align:center; font-size:11.5px; color:var(--text-faint); font-family:var(--font-mono); line-height:1.8;}
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="brand">
+    <svg width="30" height="30" viewBox="0 0 32 32" fill="none">
+      <path d="M3 16c4-6 10-9 16-9 5 0 8 2 10 4-2 3-5 5-10 5-6 0-12-3-16-9" stroke="#e8934a" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+      <circle cx="24" cy="12.5" r="1.4" fill="#e8934a"/>
+      <path d="M22 22c2 1.5 5 2 8 1" stroke="#4fa3c4" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+    </svg>
+    <div class="brand-text">
+      <h1>OpenCast</h1>
+      <p>FREE &amp; OPEN-SOURCE FISHING INTEL</p>
+    </div>
+  </div>
+  <div class="loc-row">
+    <input type="text" id="locInput" placeholder="Search a lake, river, or town…" autocomplete="off">
+    <button class="btn" id="geoBtn" title="Use my location">📍</button>
+    <div class="loc-results" id="locResults" style="display:none;"></div>
+  </div>
+  <div class="current-loc" id="currentLoc"><span class="dot"></span> Loading location…</div>
+</header>
+
+<nav class="tabs">
+  <button data-tab="forecast" class="active">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 15l4-4 4 3 4-6 6 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Forecast
+  </button>
+  <button data-tab="map">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s7-6.5 7-12a7 7 0 1 0-14 0c0 5.5 7 12 7 12z" stroke-linejoin="round"/><circle cx="12" cy="9" r="2.3"/></svg>
+    Spots
+  </button>
+  <button data-tab="log">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V6a2 2 0 0 1 2-2h9l5 5v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" stroke-linejoin="round"/><path d="M8 12h8M8 16h5" stroke-linecap="round"/></svg>
+    Catch Log
+  </button>
+  <button data-tab="advisor">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8.5"/><path d="M12 8v4l2.6 2.6" stroke-linecap="round"/></svg>
+    Bait Advisor
+  </button>
+</nav>
+
+<main>
+
+  <!-- ================= FORECAST TAB ================= -->
+  <section class="tabpanel active" id="tab-forecast">
+
+    <div class="hero">
+      <svg class="hero-contours" viewBox="0 0 400 160" preserveAspectRatio="none">
+        <path d="M-10 130 C 60 100, 90 150, 150 120 S 260 90, 330 130 S 420 100, 460 140" stroke="#4fa3c4" stroke-width="1" fill="none"/>
+        <path d="M-10 105 C 70 80, 100 120, 160 95 S 270 70, 340 105 S 430 80, 470 115" stroke="#4fa3c4" stroke-width="1" fill="none"/>
+        <path d="M-10 80 C 80 60, 110 95, 170 72 S 280 52, 350 80 S 440 60, 480 90" stroke="#4fa3c4" stroke-width="1" fill="none"/>
+        <path d="M-10 55 C 90 40, 120 68, 180 50 S 290 34, 360 55 S 450 40, 490 65" stroke="#e8934a" stroke-width="1" fill="none"/>
+      </svg>
+      <div class="hero-inner">
+        <div class="gauge-wrap">
+          <svg width="120" height="120" viewBox="0 0 120 120">
+            <circle class="gauge-track" cx="60" cy="60" r="50"></circle>
+            <circle class="gauge-fill" id="gaugeFill" cx="60" cy="60" r="50" stroke="#e8934a" stroke-dasharray="314" stroke-dashoffset="314"></circle>
+          </svg>
+          <div class="gauge-num"><span class="n" id="scoreNum">–</span><span class="l">BITE SCORE</span></div>
+        </div>
+        <div class="hero-meta">
+          <div class="band" id="scoreBand">Loading conditions…</div>
+          <div class="sub" id="scoreSub">Fetching live weather and moon data for your water.</div>
+          <div class="window" id="bestWindow" style="display:none;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="chip-row" id="chipRow"></div>
+
+    <details class="methodology">
+      <summary>How is the Bite Score calculated?</summary>
+      <p>OpenCast blends four signals anglers have relied on for generations: barometric pressure trend (a falling barometer often triggers a pre-front feeding window), wind speed (light-to-moderate chop stirs baitfish without shutting fish down), proximity to dawn/dusk light transitions, cloud cover, and lunar phase (activity tends to cluster near new and full moons). It's a heuristic guide grounded in classic angling &amp; solunar theory — not a guarantee. Fish don't read forecasts.</p>
+    </details>
+
+    <h2 class="section-title">7-Day Outlook</h2>
+    <div class="card">
+      <div class="day-tabs" id="dayTabs"></div>
+      <div class="hour-bars" id="hourBars"></div>
+    </div>
+
+    <h2 class="section-title">Moon Phase</h2>
+    <div class="card">
+      <div class="moon-row">
+        <svg width="56" height="56" viewBox="0 0 56 56" id="moonSvg"></svg>
+        <div class="moon-info">
+          <div class="name" id="moonName">—</div>
+          <div class="pct" id="moonPct">—</div>
+        </div>
+      </div>
+    </div>
+
+    <h2 class="section-title">Tide Times <span style="font-weight:400; text-transform:none; letter-spacing:0; color:var(--text-faint);">(US coastal, optional)</span></h2>
+    <div class="card">
+      <div style="display:flex; gap:8px;">
+        <input type="text" id="tideStation" placeholder="NOAA station ID, e.g. 8518750" style="flex:1; background:var(--bg-alt); border:1px solid var(--border); color:var(--text); padding:9px 10px; border-radius:var(--radius-sm); font-size:13.5px; font-family:var(--font-mono);">
+        <button class="btn small" id="tideBtn">Fetch</button>
+      </div>
+      <div class="map-hint">Don't know your station? <a href="https://tidesandcurrents.noaa.gov/" target="_blank" rel="noopener">Find it on tidesandcurrents.noaa.gov ↗</a></div>
+      <div id="tideResults" style="margin-top:12px;"></div>
+    </div>
+
+  </section>
+
+  <!-- ================= MAP TAB ================= -->
+  <section class="tabpanel map-tab" id="tab-map">
+    <div id="map"></div>
+
+    <div class="map-top-float">
+      <button class="pill-btn" id="findZonesBtn">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l1.8 4.6L18 9l-4.2 1.4L12 15l-1.8-4.6L6 9l4.2-1.4z"/><path d="M19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9z"/></svg>
+        Find good zones here
+      </button>
+    </div>
+
+    <div class="map-side-float">
+      <button class="round-btn" id="locateBtn" title="My location">
+        <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+
+    <div class="map-legend" id="mapLegend">
+      <span><i class="dot-sw" style="background:var(--blue)"></i>Your spots</span>
+      <span><i class="dot-sw" style="background:var(--amber)"></i>Community</span>
+      <span><i class="dot-sw" style="background:var(--green)"></i>AI zones</span>
+    </div>
+
+    <div class="sheet" id="spotSheet">
+      <div class="sheet-handle" id="sheetHandle"></div>
+      <div class="sheet-header" id="sheetHeader">
+        <div class="sheet-tabs" id="sheetTabs">
+          <button class="sheet-tab-btn active" data-sheet="spots">Your Spots <span id="cnt-spots">0</span></button>
+          <button class="sheet-tab-btn" data-sheet="community">Community <span id="cnt-community">0</span></button>
+          <button class="sheet-tab-btn" data-sheet="zones">AI Zones <span id="cnt-zones">0</span></button>
+        </div>
+      </div>
+      <div class="sheet-body" id="sheetBody">
+
+        <div class="map-hint" style="margin-top:0;">Drag this panel up for the full list, or tap the map to drop a pin.</div>
+
+        <div class="inline-form" id="spotForm">
+          <label>Spot name</label>
+          <input type="text" id="spotName" placeholder="e.g. Rocky point drop-off">
+          <label>Notes</label>
+          <textarea id="spotNotes" placeholder="Structure, depth, what you've caught here…"></textarea>
+          <div class="checkline">
+            <input type="checkbox" id="spotShare">
+            <label for="spotShare" style="margin:0; text-transform:none; letter-spacing:0; font-size:12.5px;">Share to the community map — visible to everyone using this app, along with the pin location.</label>
+          </div>
+          <div class="form-actions">
+            <button class="btn primary" id="saveSpotBtn">Save spot</button>
+            <button class="btn ghost" id="cancelSpotBtn">Cancel</button>
+          </div>
+        </div>
+
+        <div class="sheet-panel active" id="sheetpanel-spots">
+          <div class="spot-list" id="spotList"></div>
+        </div>
+        <div class="sheet-panel" id="sheetpanel-community">
+          <div class="spot-list" id="communitySpotList"></div>
+        </div>
+        <div class="sheet-panel" id="sheetpanel-zones">
+          <div class="map-hint" style="margin-top:0;">Tap "Find good zones here" over the map, zoomed in on a specific lake or pond, to run this.</div>
+          <div class="chip-row" id="zoneConditions" style="display:none;"></div>
+          <div class="map-hint" id="zoneStatus"></div>
+          <div class="reasoning" id="zoneMethodology" style="display:none;"></div>
+          <div class="spot-list" id="zoneList"></div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= CATCH LOG TAB ================= -->
+  <section class="tabpanel" id="tab-log">
+    <h2 class="section-title" style="margin-top:0;">Log a catch</h2>
+    <div class="card">
+      <button class="btn primary" id="newCatchBtn" style="width:100%;">+ Log new catch</button>
+      <div class="inline-form" id="catchForm">
+        <label>Spot</label>
+        <select id="catchSpot"><option value="">No spot / unsaved location</option></select>
+        <div class="advisor-form">
+          <div class="row2">
+            <div><label>Species</label><input type="text" id="catchSpecies" placeholder="Largemouth bass"></div>
+            <div><label>Bait / lure</label><input type="text" id="catchBait" placeholder="Green pumpkin jig"></div>
+          </div>
+          <div class="row2">
+            <div><label>Length (in)</label><input type="number" id="catchLength" step="0.1" min="0"></div>
+            <div><label>Weight (lb)</label><input type="number" id="catchWeight" step="0.1" min="0"></div>
+          </div>
+        </div>
+        <label>Date &amp; time</label>
+        <input type="datetime-local" id="catchDate">
+        <label>Rating</label>
+        <div class="rating-stars" id="catchRating">
+          <button data-v="1">★</button><button data-v="2">★</button><button data-v="3">★</button><button data-v="4">★</button><button data-v="5">★</button>
+        </div>
+        <label>Notes</label>
+        <textarea id="catchNotes" placeholder="Conditions, technique, anything worth remembering…"></textarea>
+        <div class="form-actions">
+          <button class="btn primary" id="saveCatchBtn">Save catch</button>
+          <button class="btn ghost" id="cancelCatchBtn">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <h2 class="section-title">Your Log</h2>
+    <div class="catch-list" id="catchList"></div>
+  </section>
+
+  <!-- ================= BAIT ADVISOR TAB ================= -->
+  <section class="tabpanel" id="tab-advisor">
+    <h2 class="section-title" style="margin-top:0;">Smart Bait Advisor</h2>
+    <div class="card">
+      <div class="map-hint" style="margin-top:0; margin-bottom:12px;">A rule-based recommendation engine built on classic species behavior patterns — not a trained model. It reasons from today's bite score, season, and water clarity.</div>
+      <div class="advisor-form">
+        <label>Target species</label>
+        <select id="advSpecies"></select>
+        <div class="row2">
+          <div>
+            <label>Water clarity</label>
+            <select id="advClarity">
+              <option value="clear">Clear</option>
+              <option value="stained">Stained</option>
+              <option value="muddy">Muddy</option>
+            </select>
+          </div>
+          <div>
+            <label>Season</label>
+            <select id="advSeason">
+              <option value="spring">Spring</option>
+              <option value="summer">Summer</option>
+              <option value="fall">Fall</option>
+              <option value="winter">Winter</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <button class="btn primary" id="advisorBtn" style="width:100%; margin-top:14px;">Get recommendation</button>
+
+      <div class="result-block" id="advisorResult" style="display:none;"></div>
+    </div>
+  </section>
+
+</main>
+
+<div id="toastWrap"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+(function(){
+"use strict";
+
+/* ============================================================
+   STATE
+============================================================ */
+const state = {
+  loc: { lat: 30.2672, lon: -97.7431, name: "Austin, TX (default — search to change)" },
+  weather: null,
+  scores: null,          // per-hour computed scores
+  dayIndex: 0,
+  moon: null,
+  map: null,
+  marker: null,
+  pendingLatLng: null,
+  spots: [],              // {id,name,notes,lat,lon,shared,createdAt}
+  communitySpots: [],
+  catches: [],
+  ratingValue: 0
+};
+
+const SPECIES = {
+  bass:   { label:"Largemouth / Smallmouth Bass",
+    reaction:["Spinnerbait","Chatterbait","Lipless crankbait","Walking topwater"],
+    finesse:["Texas-rigged worm","Shaky-head jig","Ned rig","Drop shot"],
+    colorsClear:["Natural shad","Green pumpkin","Watermelon red"],
+    colorsStained:["Chartreuse / white","Black &amp; blue","Firetiger"],
+    colorsMuddy:["Solid black","Junebug purple","Bright chartreuse"],
+    tech:{high:"Cover water fast around cover — reaction bites come on the retrieve, not the pause.",
+          mid:"Mix a search bait with a follow-up finesse rig on any structure that looks right.",
+          low:"Slow way down. Work it on the bottom near cover with long pauses between twitches."} },
+  smallmouth: { label:"Smallmouth Bass (rivers/lakes)",
+    reaction:["Jerkbait","Ned rig on a swim","Small crankbait","Inline spinner"],
+    finesse:["Tube jig","Drop shot minnow","Ned rig"],
+    colorsClear:["Smoke / silver","Natural craw","Green pumpkin"],
+    colorsStained:["Gold / orange","Chartreuse"],
+    colorsMuddy:["Black","Dark craw"],
+    tech:{high:"Fish current seams and rock — smallmouth chase hard when active.",
+          mid:"Target transition zones between rock and gravel.",
+          low:"Dead-stick a tube or drop shot right on bottom structure."} },
+  trout:  { label:"Trout (stream &amp; lake)",
+    reaction:["Small spinner","Streamer","Spoon"],
+    finesse:["Nymph under indicator","Powerbait on light line","Small jig"],
+    colorsClear:["Natural / olive","Silver"],
+    colorsStained:["Orange","Chartreuse"],
+    colorsMuddy:["Bright pink","Fluorescent orange"],
+    tech:{high:"Cast across and swing streamers or spinners through runs and riffles.",
+          mid:"Drift naturals through seams and pocket water at a moderate pace.",
+          low:"Dead-drift small nymphs deep and slow, or still-fish bait near cover."} },
+  walleye:{ label:"Walleye",
+    reaction:["Crankbait trolled","Bladebait","Jigging spoon"],
+    finesse:["Jig &amp; minnow","Live-bait rig","Soft plastic swimbait"],
+    colorsClear:["Natural perch","Silver / blue"],
+    colorsStained:["Chartreuse / orange","Gold"],
+    colorsMuddy:["Firetiger","Bright orange"],
+    tech:{high:"Work the low-light bite hard along breaklines and points at speed.",
+          mid:"Slow-troll or drift structure edges near drop-offs.",
+          low:"Vertical jig slow and tight to bottom near deep structure."} },
+  crappie:{ label:"Crappie / Panfish",
+    reaction:["Small swimbait","Beetle spin","Roadrunner jig"],
+    finesse:["Live minnow under a slip bobber","Small tube jig"],
+    colorsClear:["Natural shad","Translucent"],
+    colorsStained:["Chartreuse","Pink / white"],
+    colorsMuddy:["Bright yellow","Chartreuse"],
+    tech:{high:"Cast to brush piles and work jigs at a steady swim.",
+          mid:"Spider-rig or slow-troll around timber and docks.",
+          low:"Still-fish live bait tight to cover, barely moving."} },
+  catfish:{ label:"Catfish",
+    reaction:["Cut bait fished actively","Punch bait"],
+    finesse:["Nightcrawlers on bottom rig","Chicken liver","Stink bait"],
+    colorsClear:["N/A — scent-driven"],
+    colorsStained:["N/A — scent-driven"],
+    colorsMuddy:["N/A — scent-driven"],
+    tech:{high:"Fish current breaks and holes at dusk/night with fresh cut bait.",
+          mid:"Anchor near channel edges and fan-cast bait rigs.",
+          low:"Soak stink or dip bait patiently in deep holes."} },
+  pike:   { label:"Pike / Musky",
+    reaction:["Bucktail spinner","Large swimbait","Jerkbait"],
+    finesse:["Slow-rolled spinnerbait","Soft-plastic glide bait"],
+    colorsClear:["Silver / white","Natural perch"],
+    colorsStained:["Firetiger","Orange / black"],
+    colorsMuddy:["Black","Bright chartreuse"],
+    tech:{high:"Burn bucktails past weed edges — figure-eight every cast at the boat.",
+          mid:"Work weed edges and points at a steady moderate pace.",
+          low:"Slow-roll large soft plastics deep along breaklines."} },
+  inshore:{ label:"Saltwater Inshore (redfish/trout/snook)",
+    reaction:["Topwater walker","Gold spoon","Paddletail swimbait"],
+    finesse:["Soft plastic on jighead, worked slow","Live shrimp under a popping cork"],
+    colorsClear:["Natural / bone","Clear / gold flake"],
+    colorsStained:["Chartreuse","Root beer"],
+    colorsMuddy:["Dark / black","Bright orange"],
+    tech:{high:"Work moving water on the tide — topwater at first light, then paddletails.",
+          mid:"Fan-cast flats and drop-offs, mix retrieves until you find the bite.",
+          low:"Slow-crawl soft plastics or soak live bait near structure."} }
+};
+
+/* ============================================================
+   UTILITIES
+============================================================ */
+function $(sel){ return document.querySelector(sel); }
+function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+
+function toast(msg, isError){
+  const wrap = $("#toastWrap");
+  const el = document.createElement("div");
+  el.className = "toast" + (isError ? " error" : "");
+  el.textContent = msg;
+  wrap.appendChild(el);
+  requestAnimationFrame(()=> el.classList.add("show"));
+  setTimeout(()=>{ el.classList.remove("show"); setTimeout(()=> el.remove(), 300); }, 3200);
+}
+
+/* ---------- Storage backend: uses Claude.ai's window.storage when present,
+   falls back to plain localStorage when the app is run standalone (hosted or opened as a file). ---------- */
+const usingLocalFallback = !(window.storage && typeof window.storage.get === "function");
+
+function lsKey(key, shared){ return "opencast:" + (shared ? "shared:" : "priv:") + key; }
+
+const localBackend = {
+  async get(key, shared){
+    const raw = localStorage.getItem(lsKey(key, shared));
+    if(raw === null) throw new Error("not found");
+    return { key, value: raw, shared: !!shared };
+  },
+  async set(key, value, shared){
+    localStorage.setItem(lsKey(key, shared), value);
+    return { key, value, shared: !!shared };
+  },
+  async delete(key, shared){
+    localStorage.removeItem(lsKey(key, shared));
+    return { key, deleted: true, shared: !!shared };
+  },
+  async list(prefix, shared){
+    const p = lsKey(prefix || "", shared);
+    const keys = [];
+    for(let i=0;i<localStorage.length;i++){
+      const k = localStorage.key(i);
+      if(k && k.indexOf(p) === 0) keys.push(k.slice(("opencast:" + (shared?"shared:":"priv:")).length));
+    }
+    return { keys, prefix, shared: !!shared };
+  }
+};
+
+const backend = usingLocalFallback ? localBackend : window.storage;
+
+async function storeGet(key, shared){
+  try{ const r = await backend.get(key, !!shared); return r ? r.value : null; }
+  catch(e){ return null; }
+}
+async function storeSet(key, value, shared){
+  try{ return await backend.set(key, value, !!shared); }
+  catch(e){ toast("Couldn't save — try again.", true); return null; }
+}
+async function storeDelete(key, shared){
+  try{ return await backend.delete(key, !!shared); } catch(e){ return null; }
+}
+async function storeList(prefix, shared){
+  try{ const r = await backend.list(prefix, !!shared); return r ? r.keys : []; }
+  catch(e){ return []; }
+}
+
+/* ============================================================
+   TAB SWITCHING
+============================================================ */
+$all("nav.tabs button").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    $all("nav.tabs button").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    $all(".tabpanel").forEach(p=>p.classList.remove("active"));
+    $("#tab-"+btn.dataset.tab).classList.add("active");
+    document.body.classList.toggle("map-mode", btn.dataset.tab === "map");
+    if(btn.dataset.tab === "map" && state.map){
+      setTimeout(()=> state.map.invalidateSize(), 80);
+    } else {
+      stopLocateWatch();
+    }
+  });
+});
+
+/* ============================================================
+   LOCATION SEARCH (Open-Meteo Geocoding — free, no key)
+============================================================ */
+let searchDebounce;
+$("#locInput").addEventListener("input", (e)=>{
+  clearTimeout(searchDebounce);
+  const q = e.target.value.trim();
+  if(q.length < 2){ $("#locResults").style.display = "none"; return; }
+  searchDebounce = setTimeout(()=> runLocationSearch(q), 350);
+});
+
+async function runLocationSearch(q){
+  try{
+    const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=6&language=en&format=json`);
+    const data = await res.json();
+    const results = data.results || [];
+    const box = $("#locResults");
+    if(!results.length){ box.style.display = "none"; return; }
+    box.innerHTML = "";
+    results.forEach(r=>{
+      const b = document.createElement("button");
+      const region = [r.admin1, r.country].filter(Boolean).join(", ");
+      b.innerHTML = `${r.name}<small>${region} · ${r.latitude.toFixed(2)}, ${r.longitude.toFixed(2)}</small>`;
+      b.addEventListener("click", ()=>{
+        state.loc = { lat: r.latitude, lon: r.longitude, name: `${r.name}${region ? ", "+region : ""}` };
+        box.style.display = "none";
+        $("#locInput").value = "";
+        onLocationChange();
+      });
+      box.appendChild(b);
+    });
+    box.style.display = "block";
+  }catch(e){ /* silent — network hiccup, user can retry */ }
+}
+
+$("#geoBtn").addEventListener("click", ()=>{
+  if(!navigator.geolocation){ toast("Geolocation isn't available in this browser.", true); return; }
+  toast("Locating…");
+  navigator.geolocation.getCurrentPosition(pos=>{
+    state.loc = { lat: pos.coords.latitude, lon: pos.coords.longitude, name: "My location" };
+    onLocationChange();
+  }, ()=> toast("Couldn't get your location.", true));
+});
+
+document.addEventListener("click", (e)=>{
+  if(!e.target.closest(".loc-row")) $("#locResults").style.display = "none";
+});
+
+function onLocationChange(){
+  $("#currentLoc").innerHTML = `<span class="dot"></span> ${state.loc.name} · ${state.loc.lat.toFixed(3)}, ${state.loc.lon.toFixed(3)}`;
+  loadWeather();
+  if(state.map){
+    state.map.setView([state.loc.lat, state.loc.lon], 11);
+  }
+  populateCatchSpotOptions();
+}
+
+/* ============================================================
+   WEATHER + SCORING (Open-Meteo — free, no key required)
+============================================================ */
+async function loadWeather(){
+  $("#scoreBand").textContent = "Loading conditions…";
+  $("#scoreSub").textContent = "Fetching live weather and moon data for your water.";
+  try{
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${state.loc.lat}&longitude=${state.loc.lon}`
+      + `&hourly=temperature_2m,pressure_msl,wind_speed_10m,wind_direction_10m,cloud_cover,precipitation_probability`
+      + `&daily=sunrise,sunset,temperature_2m_max,temperature_2m_min`
+      + `&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto&forecast_days=7`;
+    const res = await fetch(url);
+    if(!res.ok) throw new Error("bad response");
+    const data = await res.json();
+    state.weather = data;
+    state.scores = computeScores(data);
+    state.dayIndex = 0;
+    renderForecast();
+  }catch(e){
+    $("#scoreBand").textContent = "Forecast unavailable";
+    $("#scoreSub").textContent = "Couldn't reach the weather service right now — check your connection and try again.";
+  }
+}
+
+function computeMoonPhase(date){
+  const synodic = 29.53058867;
+  const knownNewMoon = Date.UTC(2000,0,6,18,14,0);
+  let days = (date.getTime() - knownNewMoon) / 86400000;
+  let phase = (days % synodic) / synodic;
+  if(phase < 0) phase += 1;
+  const illumination = (1 - Math.cos(2*Math.PI*phase)) / 2;
+  let name;
+  if(phase < 0.02 || phase > 0.98) name = "New Moon";
+  else if(phase < 0.24) name = "Waxing Crescent";
+  else if(phase < 0.26) name = "First Quarter";
+  else if(phase < 0.49) name = "Waxing Gibbous";
+  else if(phase < 0.51) name = "Full Moon";
+  else if(phase < 0.74) name = "Waning Gibbous";
+  else if(phase < 0.76) name = "Last Quarter";
+  else name = "Waning Crescent";
+  const activityFactor = Math.abs(Math.cos(2*Math.PI*phase)); // 1 at new/full, 0 at quarters
+  return { phase, illumination, name, activityFactor };
+}
+
+function computeScores(data){
+  const h = data.hourly;
+  const times = h.time;
+  const pressure = h.pressure_msl;
+  const wind = h.wind_speed_10m;
+  const cloud = h.cloud_cover;
+  const daily = data.daily;
+
+  // moon activity factor per day, keyed by date string
+  const moonByDate = {};
+  daily.time.forEach(dstr=>{
+    moonByDate[dstr] = computeMoonPhase(new Date(dstr+"T12:00:00"));
+  });
+
+  const results = times.map((t, i)=>{
+    const dstr = t.slice(0,10);
+    const dayIdx = daily.time.indexOf(dstr);
+    const sunrise = dayIdx>=0 ? new Date(daily.sunrise[dayIdx]) : null;
+    const sunset  = dayIdx>=0 ? new Date(daily.sunset[dayIdx]) : null;
+    const cur = new Date(t);
+
+    // --- moon (20 pts)
+    const moon = moonByDate[dstr] || { activityFactor: 0.5 };
+    const moonPts = 20 * moon.activityFactor;
+
+    // --- pressure trend (25 pts)
+    const prevIdx = Math.max(0, i-3);
+    const delta = pressure[i] - pressure[prevIdx];
+    let pressPts;
+    if(delta <= -1.2) pressPts = 25;
+    else if(delta < -0.3) pressPts = 19;
+    else if(Math.abs(delta) <= 0.3) pressPts = 14;
+    else if(delta > 1.2) pressPts = 5;
+    else pressPts = 9;
+
+    // --- wind (20 pts) — light chop is ideal, dead calm or gusty is worse
+    const w = wind[i];
+    let windPts;
+    if(w >= 3 && w <= 12) windPts = 20;
+    else if(w > 12 && w <= 18) windPts = 13;
+    else if(w < 3) windPts = 10;
+    else windPts = 6;
+
+    // --- dawn/dusk proximity (25 pts)
+    let lightPts = 8; // baseline (covers night / low-light bite)
+    if(sunrise && sunset){
+      const minToSunrise = Math.abs(cur - sunrise) / 60000;
+      const minToSunset  = Math.abs(cur - sunset) / 60000;
+      const minDiff = Math.min(minToSunrise, minToSunset);
+      if(minDiff <= 60) lightPts = 25;
+      else if(minDiff <= 120) lightPts = 16;
+      else if(cur > sunrise && cur < sunset) lightPts = 6; // full midday sun
+    }
+
+    // --- cloud cover (10 pts)
+    const c = cloud[i];
+    let cloudPts;
+    if(c >= 55 && c <= 90) cloudPts = 10;
+    else if(c > 90) cloudPts = 6;
+    else if(c >= 25) cloudPts = 7;
+    else cloudPts = 5;
+
+    const score = Math.round(moonPts + pressPts + windPts + lightPts + cloudPts);
+    return {
+      time: cur, score: Math.max(0, Math.min(100, score)),
+      temp: h.temperature_2m[i], pressure: pressure[i], wind: w, cloud: c,
+      precip: h.precipitation_probability ? h.precipitation_probability[i] : null,
+      dateStr: dstr
+    };
+  });
+  return results;
+}
+
+function scoreBand(score){
+  if(score >= 80) return { label:"Excellent", color:"#6fb07a" };
+  if(score >= 60) return { label:"Good", color:"#e8934a" };
+  if(score >= 40) return { label:"Fair", color:"#4fa3c4" };
+  return { label:"Slow", color:"#d9705f" };
+}
+
+function renderForecast(){
+  if(!state.scores) return;
+  const now = new Date();
+  // find closest hour index
+  let closest = 0, bestDiff = Infinity;
+  state.scores.forEach((s,i)=>{ const d = Math.abs(s.time - now); if(d < bestDiff){ bestDiff = d; closest = i; } });
+  const cur = state.scores[closest];
+  const band = scoreBand(cur.score);
+
+  $("#scoreNum").textContent = cur.score;
+  $("#scoreNum").style.color = band.color;
+  $("#scoreBand").textContent = band.label + " conditions right now";
+  $("#scoreBand").style.color = band.color;
+  $("#scoreSub").textContent = `${state.loc.name} · ${Math.round(cur.temp)}°F, wind ${Math.round(cur.wind)} mph, ${Math.round(cur.cloud)}% cloud cover.`;
+
+  const circumference = 2 * Math.PI * 50;
+  const offset = circumference * (1 - cur.score/100);
+  const gf = $("#gaugeFill");
+  gf.setAttribute("stroke-dasharray", circumference.toFixed(1));
+  gf.setAttribute("stroke-dashoffset", offset.toFixed(1));
+  gf.style.stroke = band.color;
+
+  // best window today
+  const todayStr = cur.dateStr;
+  const todayScores = state.scores.filter(s=>s.dateStr === todayStr);
+  if(todayScores.length){
+    const best = todayScores.reduce((a,b)=> b.score > a.score ? b : a);
+    const bw = $("#bestWindow");
+    bw.style.display = "inline-flex";
+    bw.textContent = `Best window today ≈ ${best.time.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'})}`;
+  }
+
+  // chips
+  $("#chipRow").innerHTML = `
+    <div class="chip"><div class="v">${Math.round(cur.temp)}°F</div><div class="k">Air Temp</div></div>
+    <div class="chip"><div class="v">${(cur.pressure*0.02953).toFixed(2)}"</div><div class="k">Pressure</div></div>
+    <div class="chip"><div class="v">${Math.round(cur.wind)} mph</div><div class="k">Wind</div></div>
+    <div class="chip"><div class="v">${Math.round(cur.cloud)}%</div><div class="k">Cloud</div></div>
+    ${cur.precip!==null ? `<div class="chip"><div class="v">${Math.round(cur.precip)}%</div><div class="k">Rain chance</div></div>` : ""}
+  `;
+
+  renderDayTabs();
+  renderHourBars();
+  renderMoon();
+}
+
+function uniqueDays(){
+  const seen = [];
+  state.scores.forEach(s=>{ if(!seen.includes(s.dateStr)) seen.push(s.dateStr); });
+  return seen;
+}
+
+function renderDayTabs(){
+  const days = uniqueDays();
+  const box = $("#dayTabs");
+  box.innerHTML = "";
+  days.forEach((d, idx)=>{
+    const date = new Date(d+"T12:00:00");
+    const label = idx===0 ? "Today" : date.toLocaleDateString([], {weekday:'short'});
+    const b = document.createElement("button");
+    b.textContent = label;
+    if(idx === state.dayIndex) b.classList.add("active");
+    b.addEventListener("click", ()=>{ state.dayIndex = idx; renderDayTabs(); renderHourBars(); });
+    box.appendChild(b);
+  });
+}
+
+function renderHourBars(){
+  const days = uniqueDays();
+  const dstr = days[state.dayIndex];
+  const hours = state.scores.filter(s=>s.dateStr === dstr);
+  const box = $("#hourBars");
+  box.innerHTML = "";
+  hours.forEach(h=>{
+    const band = scoreBand(h.score);
+    const col = document.createElement("div");
+    col.className = "hour-bar";
+    col.innerHTML = `<div class="bar" style="height:${Math.max(4,h.score)}%; background:${band.color};"></div>
+      <div class="lbl">${h.time.getHours()}</div>`;
+    box.appendChild(col);
+  });
+}
+
+function renderMoon(){
+  const days = uniqueDays();
+  const dstr = days[state.dayIndex];
+  const moon = computeMoonPhase(new Date(dstr+"T12:00:00"));
+  $("#moonName").textContent = moon.name;
+  $("#moonPct").textContent = Math.round(moon.illumination*100) + "% illuminated";
+  drawMoonSvg(moon.phase);
+}
+
+function drawMoonSvg(phase){
+  const svg = $("#moonSvg");
+  const r = 24, cx = 28, cy = 28;
+  // waxing (0-0.5): lit on right; waning (0.5-1): lit on left
+  const waxing = phase <= 0.5;
+  const p = waxing ? phase*2 : (1-phase)*2; // 0..1 progress through half-cycle
+  const rx = Math.abs(Math.cos(p*Math.PI)) * r; // ellipse curvature
+  let terminatorPath;
+  if(p < 0.5){
+    // crescent -> half growing
+    terminatorPath = `M ${cx} ${cy-r} A ${rx} ${r} 0 0 ${waxing?1:0} ${cx} ${cy+r} A ${r} ${r} 0 0 ${waxing?0:1} ${cx} ${cy-r} Z`;
+  }else{
+    terminatorPath = `M ${cx} ${cy-r} A ${rx} ${r} 0 0 ${waxing?0:1} ${cx} ${cy+r} A ${r} ${r} 0 0 ${waxing?0:1} ${cx} ${cy-r} Z`;
+  }
+  svg.innerHTML = `
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="#173338" stroke="#1f4146"/>
+    <path d="${terminatorPath}" fill="#e8934a"/>
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#1f4146"/>
+  `;
+}
+
+/* ============================================================
+   TIDES (NOAA CO-OPS — free, US coastal stations)
+============================================================ */
+$("#tideBtn").addEventListener("click", loadTides);
+async function loadTides(){
+  const station = $("#tideStation").value.trim();
+  const box = $("#tideResults");
+  if(!station){ toast("Enter a NOAA station ID first.", true); return; }
+  box.innerHTML = `<div class="map-hint">Loading tide predictions…</div>`;
+  try{
+    const today = new Date();
+    const begin = today.toISOString().slice(0,10).replace(/-/g,"");
+    const url = `https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?product=predictions&application=OpenCast&begin_date=${begin}&range=48&datum=MLLW&station=${encodeURIComponent(station)}&time_zone=lst_ld&units=english&interval=hilo&format=json`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if(data.error){ box.innerHTML = `<div class="map-hint">Station not found — double check the ID.</div>`; return; }
+    const preds = data.predictions || [];
+    if(!preds.length){ box.innerHTML = `<div class="map-hint">No predictions returned for that station.</div>`; return; }
+    box.innerHTML = preds.map(p=>{
+      const isHigh = p.type === "H";
+      const d = new Date(p.t.replace(" ", "T"));
+      return `<div class="list-item" style="margin-bottom:6px;">
+        <div class="main"><div class="name">${isHigh?"↑ High":"↓ Low"} tide</div>
+        <div class="meta">${d.toLocaleString([], {weekday:'short', month:'short', day:'numeric', hour:'numeric', minute:'2-digit'})} · ${p.v} ft</div></div>
+      </div>`;
+    }).join("");
+  }catch(e){
+    box.innerHTML = `<div class="map-hint">Couldn't reach NOAA's tide service right now.</div>`;
+  }
+}
+
+/* ============================================================
+   MAP + SPOTS
+============================================================ */
+function initMap(){
+  state.map = L.map('map', { zoomControl: true, tap: true, dragging: true, touchZoom: true, bounceAtZoomLimits: false })
+    .setView([state.loc.lat, state.loc.lon], 12);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors'
+  }).addTo(state.map);
+
+  state.map.on('click', (e)=>{
+    state.pendingLatLng = e.latlng;
+    if(state.marker) state.map.removeLayer(state.marker);
+    state.marker = L.marker(e.latlng).addTo(state.map);
+    setSheetTab("spots");
+    setSheet("expanded");
+    $("#spotForm").classList.add("open");
+    setTimeout(()=> $("#spotName").focus(), 250);
+  });
+
+  initSheetDrag();
+}
+
+$("#cancelSpotBtn").addEventListener("click", ()=>{
+  $("#spotForm").classList.remove("open");
+  $("#spotName").value = ""; $("#spotNotes").value = ""; $("#spotShare").checked = false;
+  if(state.marker){ state.map.removeLayer(state.marker); state.marker = null; }
+});
+
+$("#saveSpotBtn").addEventListener("click", async ()=>{
+  if(!state.pendingLatLng){ toast("Tap the map to place a pin first.", true); return; }
+  const name = $("#spotName").value.trim() || "Unnamed spot";
+  const notes = $("#spotNotes").value.trim();
+  const shared = $("#spotShare").checked;
+  const spot = { id: uid(), name, notes, lat: state.pendingLatLng.lat, lon: state.pendingLatLng.lng, shared, createdAt: Date.now() };
+  const key = "spots:" + spot.id;
+  const ok = await storeSet(key, JSON.stringify(spot), shared);
+  if(ok){
+    toast(shared ? "Spot saved and shared to the community." : "Spot saved.");
+    $("#spotForm").classList.remove("open");
+    $("#spotName").value = ""; $("#spotNotes").value = ""; $("#spotShare").checked = false;
+    await loadSpots();
+  }
+});
+
+async function loadSpots(){
+  const personalKeys = await storeList("spots:", false);
+  const communityKeys = await storeList("spots:", true);
+  const personal = [];
+  for(const k of personalKeys){
+    const v = await storeGet(k, false);
+    if(v){ try{ personal.push(JSON.parse(v)); }catch(e){} }
+  }
+  const community = [];
+  for(const k of communityKeys){
+    const v = await storeGet(k, true);
+    if(v){ try{ community.push(JSON.parse(v)); }catch(e){} }
+  }
+  state.spots = personal.sort((a,b)=> b.createdAt - a.createdAt);
+  state.communitySpots = community.sort((a,b)=> b.createdAt - a.createdAt);
+  renderSpotLists();
+  populateCatchSpotOptions();
+  plotSpotMarkers();
+}
+
+function renderSpotLists(){
+  const personalBox = $("#spotList");
+  $("#cnt-spots").textContent = state.spots.length;
+  if(!state.spots.length){
+    personalBox.innerHTML = `<div class="empty-state"><p>No spots logged yet — tap the map to drop your first pin.</p></div>`;
+  }else{
+    personalBox.innerHTML = state.spots.map(s=>`
+      <div class="list-item">
+        <div class="main">
+          <div class="name">${escapeHtml(s.name)} ${s.shared ? '<span class="tag community">SHARED</span>':''}</div>
+          <div class="meta">${s.lat.toFixed(4)}, ${s.lon.toFixed(4)}${s.notes ? " · " + escapeHtml(s.notes) : ""}</div>
+        </div>
+        <div class="actions">
+          <button class="btn small" data-fly="${s.lat},${s.lon}">Go to</button>
+          <button class="btn small danger" data-del="${s.id}" data-shared="${s.shared}">Delete</button>
+        </div>
+      </div>`).join("");
+    personalBox.querySelectorAll("[data-del]").forEach(btn=>{
+      btn.addEventListener("click", async ()=>{
+        await storeDelete("spots:"+btn.dataset.del, btn.dataset.shared === "true");
+        toast("Spot removed.");
+        loadSpots();
+      });
+    });
+    personalBox.querySelectorAll("[data-fly]").forEach(btn=>{
+      btn.addEventListener("click", ()=> flyToPoint(btn.dataset.fly));
+    });
+  }
+
+  const commBox = $("#communitySpotList");
+  $("#cnt-community").textContent = state.communitySpots.length;
+  if(!state.communitySpots.length){
+    commBox.innerHTML = `<div class="empty-state"><p>No community spots yet — be the first to share one from the map.</p></div>`;
+  }else{
+    commBox.innerHTML = state.communitySpots.map(s=>`
+      <div class="list-item">
+        <div class="main">
+          <div class="name">${escapeHtml(s.name)}</div>
+          <div class="meta">${s.lat.toFixed(4)}, ${s.lon.toFixed(4)}${s.notes ? " · " + escapeHtml(s.notes) : ""}</div>
+        </div>
+        <div class="actions"><button class="btn small" data-fly="${s.lat},${s.lon}">Go to</button></div>
+      </div>`).join("");
+    commBox.querySelectorAll("[data-fly]").forEach(btn=>{
+      btn.addEventListener("click", ()=> flyToPoint(btn.dataset.fly));
+    });
+  }
+}
+
+function flyToPoint(str){
+  const [lat,lon] = str.split(",").map(Number);
+  state.map.flyTo([lat,lon], 15, { duration: 0.6 });
+  setSheet("peek");
+}
+
+let spotMarkers = [];
+function plotSpotMarkers(){
+  if(!state.map) return;
+  spotMarkers.forEach(m=> state.map.removeLayer(m));
+  spotMarkers = [];
+  [...state.spots, ...state.communitySpots].forEach(s=>{
+    const m = L.circleMarker([s.lat, s.lon], { radius:7, color: s.shared?'#e8934a':'#4fa3c4', fillColor: s.shared?'#e8934a':'#4fa3c4', fillOpacity:0.85, weight:2 })
+      .addTo(state.map).bindPopup(`<strong>${escapeHtml(s.name)}</strong>${s.notes ? "<br>"+escapeHtml(s.notes):""}`);
+    spotMarkers.push(m);
+  });
+}
+
+/* ---------- Bottom sheet (drag to expand/collapse) ---------- */
+function setSheet(mode){
+  const sheet = $("#spotSheet");
+  sheet.classList.add("anim");
+  sheet.dataset.state = mode;
+  const rect = sheet.getBoundingClientRect();
+  const peekPx = Math.max(0, rect.height - 94);
+  sheet.style.transform = `translateY(${mode === "peek" ? peekPx : 0}px)`;
+  setTimeout(()=> sheet.classList.remove("anim"), 340);
+}
+
+function initSheetDrag(){
+  const sheet = $("#spotSheet");
+  const handleArea = $("#sheetHandle");
+  const headerArea = $("#sheetHeader");
+  setSheet("peek");
+
+  let dragging = false, startY = 0, startPx = 0, moved = false;
+
+  function onDown(e){
+    if(e.target.closest(".sheet-tab-btn")) return; // let tab buttons work normally
+    dragging = true; moved = false;
+    startY = (e.touches ? e.touches[0].clientY : e.clientY);
+    const m = sheet.style.transform.match(/-?\d+(\.\d+)?/);
+    startPx = m ? parseFloat(m[0]) : 0;
+    sheet.classList.remove("anim");
+  }
+  function onMove(e){
+    if(!dragging) return;
+    const y = (e.touches ? e.touches[0].clientY : e.clientY);
+    const dy = y - startY;
+    if(Math.abs(dy) > 6) moved = true;
+    const rect = sheet.getBoundingClientRect();
+    const peekPx = Math.max(0, rect.height - 94);
+    const next = Math.min(peekPx, Math.max(0, startPx + dy));
+    sheet.style.transform = `translateY(${next}px)`;
+  }
+  function onUp(){
+    if(!dragging) return;
+    dragging = false;
+    const rect = sheet.getBoundingClientRect();
+    const peekPx = Math.max(0, rect.height - 94);
+    const m = sheet.style.transform.match(/-?\d+(\.\d+)?/);
+    const cur = m ? parseFloat(m[0]) : 0;
+    if(!moved){
+      setSheet(sheet.dataset.state === "peek" ? "expanded" : "peek");
+    }else{
+      setSheet(cur > peekPx/2 ? "peek" : "expanded");
+    }
+  }
+
+  [handleArea, headerArea].forEach(el=>{
+    el.addEventListener("mousedown", onDown);
+    el.addEventListener("touchstart", onDown, {passive:true});
+  });
+  window.addEventListener("mousemove", onMove);
+  window.addEventListener("touchmove", onMove, {passive:true});
+  window.addEventListener("mouseup", onUp);
+  window.addEventListener("touchend", onUp);
+
+  $all(".sheet-tab-btn").forEach(btn=>{
+    btn.addEventListener("click", ()=> setSheetTab(btn.dataset.sheet));
+  });
+}
+
+function setSheetTab(name){
+  $all(".sheet-tab-btn").forEach(b=> b.classList.toggle("active", b.dataset.sheet === name));
+  $all(".sheet-panel").forEach(p=> p.classList.remove("active"));
+  $("#sheetpanel-"+name).classList.add("active");
+}
+
+/* ---------- Locate me (live tracking dot) ---------- */
+let locateMarker = null, locateWatchId = null;
+$("#locateBtn").addEventListener("click", ()=>{
+  if(!navigator.geolocation){ toast("Geolocation isn't available in this browser.", true); return; }
+  const btn = $("#locateBtn");
+  btn.classList.add("active");
+  navigator.geolocation.getCurrentPosition(pos=>{
+    const {latitude, longitude} = pos.coords;
+    state.map.flyTo([latitude, longitude], 15, { duration: 0.6 });
+    placeLocateDot(latitude, longitude);
+  }, ()=> toast("Couldn't get your location.", true), { enableHighAccuracy:true, timeout:8000 });
+
+  if(locateWatchId === null){
+    locateWatchId = navigator.geolocation.watchPosition(pos=>{
+      placeLocateDot(pos.coords.latitude, pos.coords.longitude);
+    }, ()=>{}, { enableHighAccuracy:true, maximumAge:5000 });
+  }
+});
+
+function placeLocateDot(lat, lon){
+  const icon = L.divIcon({ className:"", html:`<div style="position:relative;"><div class="locate-pulse"></div><div class="locate-dot-icon"></div></div>`, iconSize:[18,18], iconAnchor:[9,9] });
+  if(locateMarker){ locateMarker.setLatLng([lat,lon]); }
+  else{ locateMarker = L.marker([lat,lon], { icon, zIndexOffset: 500 }).addTo(state.map); }
+}
+
+function stopLocateWatch(){
+  if(locateWatchId !== null){ navigator.geolocation.clearWatch(locateWatchId); locateWatchId = null; }
+  $("#locateBtn").classList.remove("active");
+}
+
+/* ---------- AI Spot Finder (shoreline structure + live wind, from OpenStreetMap + Open-Meteo) ---------- */
+$("#findZonesBtn").addEventListener("click", runZoneFinder);
+
+const OVERPASS_MIRRORS = [
+  "https://overpass-api.de/api/interpreter",
+  "https://overpass.kumi.systems/api/interpreter",
+  "https://overpass.private.coffee/api/interpreter"
+];
+
+function bboxAreaKm2(b){
+  const latKm = (b.getNorth() - b.getSouth()) * 111;
+  const lonKm = (b.getEast() - b.getWest()) * 111 * Math.cos(b.getCenter().lat * Math.PI/180);
+  return Math.abs(latKm * lonKm);
+}
+
+async function fetchOverpass(query){
+  let lastErr = null;
+  for(const base of OVERPASS_MIRRORS){
+    try{
+      const res = await fetch(base, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ data: query }).toString()
+      });
+      if(!res.ok) throw new Error("HTTP " + res.status);
+      const data = await res.json();
+      return data;
+    }catch(e){ lastErr = e; /* try next mirror */ }
+  }
+  throw lastErr || new Error("all mirrors failed");
+}
+
+async function fetchLocalWind(lat, lon){
+  try{
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,wind_speed_10m,wind_direction_10m,pressure_msl,cloud_cover&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto`;
+    const res = await fetch(url);
+    if(!res.ok) return null;
+    const data = await res.json();
+    return data.current || null;
+  }catch(e){ return null; }
+}
+
+async function runZoneFinder(){
+  const btn = $("#findZonesBtn");
+  const statusEl = $("#zoneStatus");
+  if(!state.map) return;
+
+  const b = state.map.getBounds();
+  const areaKm2 = bboxAreaKm2(b);
+  if(areaKm2 > 55){
+    toast("Zoom in closer on a specific lake or pond first.", true);
+    setSheetTab("zones");
+    statusEl.textContent = `Current view is ~${Math.round(areaKm2)} km² — zoom in until it's under ~55 km² so the scan stays fast and accurate.`;
+    return;
+  }
+
+  const bbox = `${b.getSouth()},${b.getWest()},${b.getNorth()},${b.getEast()}`;
+  const center = b.getCenter();
+  btn.classList.add("loading");
+  btn.disabled = true;
+  statusEl.textContent = "Scanning shoreline and checking wind…";
+  setSheetTab("zones");
+  setSheet("expanded");
+
+  const query = `[out:json][timeout:25];(way["natural"="water"](${bbox});way["water"](${bbox});way["waterway"="river"](${bbox});way["waterway"="stream"](${bbox}););out geom;`;
+
+  try{
+    const [data, wind] = await Promise.all([
+      fetchOverpass(query),
+      fetchLocalWind(center.lat, center.lng)
+    ]);
+
+    const elements = data.elements || [];
+    const waterWays = elements.filter(el => el.type === "way" && el.tags && (el.tags.natural === "water" || el.tags.water) && el.geometry && el.geometry.length > 8);
+    const waterwayLines = elements.filter(el => el.type === "way" && el.tags && el.tags.waterway && el.geometry && el.geometry.length > 1);
+
+    if(wind){
+      renderZoneConditions(wind);
+    }
+
+    if(!waterWays.length){
+      state.zones = [];
+      plotZoneMarkers([]);
+      renderZoneList([]);
+      statusEl.textContent = `Scanned this view and found no lake or pond mapped in OpenStreetMap here (${elements.length} map features total). Try panning to a different body of water, or a slightly wider view.`;
+      return;
+    }
+
+    let candidates = [];
+    let skippedOpen = 0;
+    waterWays.forEach(way=> {
+      const r = analyzeShoreline(way.geometry, waterwayLines, wind);
+      if(r === null) skippedOpen++;
+      else candidates = candidates.concat(r);
+    });
+
+    if(!candidates.length){
+      statusEl.textContent = `Found ${waterWays.length} water feature${waterWays.length===1?"":"s"} here, but couldn't extract a clean shoreline outline to analyze (common on very small ponds or partially-mapped lakes). Try a larger, well-mapped lake.`;
+      state.zones = [];
+      plotZoneMarkers([]);
+      renderZoneList([]);
+      return;
+    }
+
+    const zones = selectTopZones(candidates, 7);
+    state.zones = zones;
+    plotZoneMarkers(zones);
+    renderZoneList(zones);
+    statusEl.textContent = `Scanned ${waterWays.length} water feature${waterWays.length===1?"":"s"} · ${candidates.length} candidate points · showing top ${zones.length}.`;
+    toast(`Found ${zones.length} candidate zone${zones.length===1?"":"s"}.`);
+  }catch(e){
+    statusEl.textContent = "Couldn't reach the map data service right now (tried multiple servers). Check your connection and try again in a moment.";
+    toast("Couldn't analyze this area right now.", true);
+  }finally{
+    btn.classList.remove("loading");
+    btn.disabled = false;
+  }
+}
+
+function renderZoneConditions(cur){
+  const box = $("#zoneConditions");
+  box.style.display = "flex";
+  const windDirLabel = compassLabel(cur.wind_direction_10m);
+  box.innerHTML = `
+    <div class="chip"><div class="v">${Math.round(cur.wind_speed_10m)} mph ${windDirLabel}</div><div class="k">Wind</div></div>
+    <div class="chip"><div class="v">${(cur.pressure_msl*0.02953).toFixed(2)}"</div><div class="k">Pressure</div></div>
+    <div class="chip"><div class="v">${Math.round(cur.cloud_cover)}%</div><div class="k">Cloud</div></div>
+  `;
+}
+
+function compassLabel(deg){
+  const dirs = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"];
+  return dirs[Math.round(deg/22.5) % 16];
+}
+
+// Converts lat/lon to local flat meters around a reference point (fine for lake-scale distances)
+function projectXY(lat, lon, lat0, lon0){
+  const R = 6371000;
+  const x = (lon - lon0) * Math.PI/180 * R * Math.cos(lat0 * Math.PI/180);
+  const y = (lat - lat0) * Math.PI/180 * R;
+  return [x, y];
+}
+
+// Returns null when the ring can't be analyzed (open way, too small), otherwise an array of candidates
+function analyzeShoreline(ring, waterwayLines, wind){
+  if(ring.length < 8) return null;
+
+  const lat0 = ring.reduce((s,p)=>s+p.lat,0)/ring.length;
+  const lon0 = ring.reduce((s,p)=>s+p.lon,0)/ring.length;
+  const first = ring[0], last = ring[ring.length-1];
+  const [fx,fy] = projectXY(first.lat, first.lon, lat0, lon0);
+  const [lx,ly] = projectXY(last.lat, last.lon, lat0, lon0);
+  const gapMeters = Math.hypot(fx-lx, fy-ly);
+  // OSM lake/pond ways are almost always closed (first node === last node); tolerate small digitization gaps
+  if(gapMeters > 150) return null;
+
+  const pts = ring.map(p=> ({ lat:p.lat, lon:p.lon, xy: projectXY(p.lat,p.lon,lat0,lon0) }));
+  if(gapMeters > 1) pts.push({ ...pts[0] }); // soft-close the ring
+
+  // ensure consistent CCW winding (positive shoelace area)
+  let area = 0;
+  for(let i=0;i<pts.length-1;i++){ area += pts[i].xy[0]*pts[i+1].xy[1] - pts[i+1].xy[0]*pts[i].xy[1]; }
+  if(area < 0) pts.reverse();
+  const areaM2 = Math.abs(area/2);
+  if(areaM2 < 400) return null; // too small a sliver to read structure from
+
+  // resample at arc-length intervals, adaptive to lake size so tiny ponds still get enough samples
+  const perimeterEstimate = Math.sqrt(areaM2) * 4;
+  const step = Math.max(8, Math.min(25, perimeterEstimate / 40));
+  const resampled = resampleRing(pts, step);
+  if(resampled.length < 16) return null;
+
+  const n = resampled.length;
+  const smoothWindow = Math.max(3, Math.round(n * 0.09));
+  const smoothed = resampled.map((_, i)=>{
+    let sx=0, sy=0, c=0;
+    for(let k=-smoothWindow;k<=smoothWindow;k++){
+      const p = resampled[((i+k)%n+n)%n];
+      sx += p.xy[0]; sy += p.xy[1]; c++;
+    }
+    return [sx/c, sy/c];
+  });
+
+  // basin center + a rough "radius" for a centrality (depth-proxy) score
+  const cx = resampled.reduce((s,p)=>s+p.xy[0],0)/n;
+  const cy = resampled.reduce((s,p)=>s+p.xy[1],0)/n;
+  const avgRadius = resampled.reduce((s,p)=> s + Math.hypot(p.xy[0]-cx, p.xy[1]-cy), 0) / n;
+
+  // waterway endpoints (creek/river) for inlet detection
+  const wwPoints = [];
+  waterwayLines.forEach(w=>{
+    if(w.geometry.length){ wwPoints.push(w.geometry[0]); wwPoints.push(w.geometry[w.geometry.length-1]); }
+  });
+
+  // downwind bearing → unit vector (wind direction is "from"; the bank it blows INTO is +180°)
+  let windVec = null;
+  if(wind && typeof wind.wind_direction_10m === "number" && wind.wind_speed_10m > 2){
+    const downwindBearing = (wind.wind_direction_10m + 180) % 360;
+    const rad = downwindBearing * Math.PI/180;
+    windVec = [Math.sin(rad), Math.cos(rad)]; // x=east, y=north
+  }
+
+  const results = [];
+  const win = Math.max(2, Math.round(step >= 20 ? 2 : 3));
+  for(let i=0;i<n;i++){
+    const prev = resampled[((i-win)%n+n)%n].xy, next = resampled[(i+win)%n].xy;
+    const tangent = [next[0]-prev[0], next[1]-prev[1]];
+    const tlen = Math.hypot(tangent[0], tangent[1]) || 1;
+    const t = [tangent[0]/tlen, tangent[1]/tlen];
+    const outward = [t[1], -t[0]]; // outward (land-ward) normal for CCW ring
+
+    const dev = [resampled[i].xy[0]-smoothed[i][0], resampled[i].xy[1]-smoothed[i][1]];
+    const devAlongNormal = dev[0]*outward[0] + dev[1]*outward[1];
+
+    let nearInlet = false;
+    for(const wp of wwPoints){
+      const dLat = (wp.lat - resampled[i].lat) * 111000;
+      const dLon = (wp.lon - resampled[i].lon) * 111000 * Math.cos(lat0*Math.PI/180);
+      if(Math.hypot(dLat,dLon) < 70){ nearInlet = true; break; }
+    }
+
+    const devThreshold = Math.max(1.5, step * 0.15);
+    let type, score;
+    if(nearInlet){ type = "Inlet"; score = 40 + Math.abs(devAlongNormal); }
+    else if(devAlongNormal < -devThreshold){ type = "Point"; score = Math.abs(devAlongNormal); }
+    else if(devAlongNormal > devThreshold){ type = "Cove"; score = Math.abs(devAlongNormal); }
+    else continue;
+
+    // depth proxy: distance from basin center relative to average — points reaching toward the
+    // center sit closer to the deeper main body, which is why anglers fish points over coves in summer
+    const distFromCenter = Math.hypot(resampled[i].xy[0]-cx, resampled[i].xy[1]-cy);
+    const centrality = Math.max(0, Math.min(1, 1 - (distFromCenter / (avgRadius*1.15))));
+    let windBoost = 0, windFavored = false;
+    if(windVec){
+      const cos = outward[0]*windVec[0] + outward[1]*windVec[1];
+      if(cos > 0.35){ windBoost = cos * 14; windFavored = true; }
+    }
+
+    score = score + (type === "Point" ? centrality*10 : 0) + windBoost;
+    results.push({ lat: resampled[i].lat, lon: resampled[i].lon, type, score, windFavored, centrality });
+  }
+  return results;
+}
+
+function resampleRing(pts, stepMeters){
+  const pathPts = pts;
+  let total = 0;
+  const segLens = [];
+  for(let i=0;i<pathPts.length-1;i++){
+    const d = Math.hypot(pathPts[i+1].xy[0]-pathPts[i].xy[0], pathPts[i+1].xy[1]-pathPts[i].xy[1]);
+    segLens.push(d); total += d;
+  }
+  if(total < stepMeters*6) return [];
+  const steps = Math.max(16, Math.floor(total/stepMeters));
+  const out = [];
+  let segIdx = 0, acc = 0;
+  for(let s=0;s<steps;s++){
+    const target = (s/steps) * total;
+    while(segIdx < segLens.length-1 && acc + segLens[segIdx] < target){
+      acc += segLens[segIdx]; segIdx++;
+    }
+    const segStart = pathPts[segIdx], segEnd = pathPts[segIdx+1];
+    const segLen = segLens[segIdx] || 1;
+    const f = Math.min(1, Math.max(0, (target - acc) / segLen));
+    const lat = segStart.lat + (segEnd.lat - segStart.lat) * f;
+    const lon = segStart.lon + (segEnd.lon - segStart.lon) * f;
+    const xy = [segStart.xy[0] + (segEnd.xy[0]-segStart.xy[0])*f, segStart.xy[1] + (segEnd.xy[1]-segStart.xy[1])*f];
+    out.push({ lat, lon, xy });
+  }
+  return out;
+}
+
+function selectTopZones(candidates, max){
+  candidates.sort((a,b)=> b.score - a.score);
+  const chosen = [];
+  for(const c of candidates){
+    const tooClose = chosen.some(ch=>{
+      const dLat = (ch.lat-c.lat)*111000, dLon = (ch.lon-c.lon)*111000;
+      return Math.hypot(dLat,dLon) < 60;
+    });
+    if(!tooClose) chosen.push(c);
+    if(chosen.length >= max) break;
+  }
+  return chosen;
+}
+
+const ZONE_COPY = {
+  Point: { label:"Point", why:"Shoreline juts out here, forming a natural current break — classic ambush structure for bass, walleye, and pike moving along the edge." },
+  Cove:  { label:"Cove", why:"A sheltered pocket off the main body — calmer water and more cover, good for spawning-season fish and cover-oriented species." },
+  Inlet: { label:"Creek Mouth", why:"Moving water enters here, adding oxygen and washing in food — one of the most reliable high-percentage zones on any lake." }
+};
+
+function zoneReasoning(z){
+  const info = ZONE_COPY[z.type];
+  let extra = "";
+  if(z.type === "Point" && z.centrality > 0.5) extra = " It also reaches well toward the middle of the basin, a decent sign of deeper water nearby.";
+  if(z.windFavored) extra += " Current wind is blowing straight into this bank, which tends to stack baitfish and active fish along it right now.";
+  return info.why + extra;
+}
+
+let zoneMarkers = [];
+function plotZoneMarkers(zones){
+  if(!state.map) return;
+  zoneMarkers.forEach(m=> state.map.removeLayer(m));
+  zoneMarkers = [];
+  zones.forEach((z, idx)=>{
+    const info = ZONE_COPY[z.type];
+    const icon = L.divIcon({ className:"", html:`<div class="zone-marker"${z.windFavored?' style="background:var(--blue); border-color:#123a44;"':''}><span>${idx+1}</span></div>`, iconSize:[26,26], iconAnchor:[13,26] });
+    const popupId = "zonepop_"+idx;
+    const m = L.marker([z.lat, z.lon], { icon, zIndexOffset: 400 })
+      .addTo(state.map)
+      .bindPopup(`<div class="popup-title">${info.label} #${idx+1}${z.windFavored?' · wind-favored':''}</div><div class="popup-body">${zoneReasoning(z)}</div><button class="popup-btn" id="${popupId}">Save as my spot</button>`);
+    m.on("popupopen", ()=>{
+      const btnEl = document.getElementById(popupId);
+      if(btnEl) btnEl.addEventListener("click", ()=> promoteZoneToSpot(z, info.label));
+    });
+    zoneMarkers.push(m);
+  });
+}
+
+function renderZoneList(zones){
+  const box = $("#zoneList");
+  $("#cnt-zones").textContent = zones.length;
+  const method = $("#zoneMethodology");
+  method.style.display = "block";
+  method.innerHTML = `<strong>How this works:</strong> OpenCast reads the shoreline shape of mapped lakes/ponds from OpenStreetMap to flag points, coves, and creek mouths, then cross-checks live wind direction for this spot — banks the wind is blowing into get a boost, since wind stacks baitfish and oxygenates the shallows. It's geometry + real-time weather, not sonar-verified depth — a solid place to start, not a guarantee.`;
+  if(!zones.length){
+    box.innerHTML = "";
+    return;
+  }
+  box.innerHTML = zones.map((z,idx)=>{
+    const info = ZONE_COPY[z.type];
+    return `<div class="list-item">
+      <div class="main">
+        <div class="name">#${idx+1} · ${info.label} ${z.windFavored ? '<span class="tag">WIND</span>' : ''}</div>
+        <div class="meta">${z.lat.toFixed(4)}, ${z.lon.toFixed(4)} — ${zoneReasoning(z)}</div>
+      </div>
+      <div class="actions"><button class="btn small" data-flyz="${z.lat},${z.lon}">Go to</button></div>
+    </div>`;
+  }).join("");
+  box.querySelectorAll("[data-flyz]").forEach(btn=>{
+    btn.addEventListener("click", ()=> flyToPoint(btn.dataset.flyz));
+  });
+}
+
+function promoteZoneToSpot(zone, label){
+  state.pendingLatLng = { lat: zone.lat, lng: zone.lon };
+  if(state.marker) state.map.removeLayer(state.marker);
+  state.marker = L.marker([zone.lat, zone.lon]).addTo(state.map);
+  setSheetTab("spots");
+  setSheet("expanded");
+  $("#spotForm").classList.add("open");
+  $("#spotName").value = label;
+  $("#spotNotes").value = zoneReasoning(zone);
+  $("#spotName").focus();
+  state.map.closePopup();
+}
+
+function escapeHtml(str){
+  const d = document.createElement("div"); d.textContent = str; return d.innerHTML;
+}
+
+/* ============================================================
+   CATCH LOG
+============================================================ */
+$("#newCatchBtn").addEventListener("click", ()=>{
+  const f = $("#catchForm");
+  f.classList.toggle("open");
+  if(f.classList.contains("open")){
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    $("#catchDate").value = now.toISOString().slice(0,16);
+  }
+});
+$("#cancelCatchBtn").addEventListener("click", ()=> resetCatchForm());
+
+function resetCatchForm(){
+  $("#catchForm").classList.remove("open");
+  ["catchSpecies","catchBait","catchLength","catchWeight","catchNotes"].forEach(id=> $("#"+id).value = "");
+  $("#catchSpot").value = "";
+  state.ratingValue = 0;
+  renderStars();
+}
+
+$all("#catchRating button").forEach(b=>{
+  b.addEventListener("click", ()=>{ state.ratingValue = parseInt(b.dataset.v,10); renderStars(); });
+});
+function renderStars(){
+  $all("#catchRating button").forEach(b=> b.classList.toggle("on", parseInt(b.dataset.v,10) <= state.ratingValue));
+}
+
+function populateCatchSpotOptions(){
+  const sel = $("#catchSpot");
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">No spot / unsaved location</option>' +
+    state.spots.map(s=> `<option value="${s.id}">${escapeHtml(s.name)}</option>`).join("");
+  sel.value = cur;
+
+  const advSel = $("#advSpecies");
+  if(advSel && !advSel.dataset.filled){
+    advSel.innerHTML = Object.keys(SPECIES).map(k=> `<option value="${k}">${SPECIES[k].label}</option>`).join("");
+    advSel.dataset.filled = "1";
+  }
+}
+
+$("#saveCatchBtn").addEventListener("click", async ()=>{
+  const species = $("#catchSpecies").value.trim();
+  if(!species){ toast("Add a species to log this catch.", true); return; }
+  const c = {
+    id: uid(),
+    spotId: $("#catchSpot").value || null,
+    species,
+    bait: $("#catchBait").value.trim(),
+    length: $("#catchLength").value ? parseFloat($("#catchLength").value) : null,
+    weight: $("#catchWeight").value ? parseFloat($("#catchWeight").value) : null,
+    date: $("#catchDate").value || new Date().toISOString(),
+    rating: state.ratingValue,
+    notes: $("#catchNotes").value.trim(),
+    scoreAtCatch: state.scores ? nearestScore($("#catchDate").value) : null
+  };
+  const ok = await storeSet("catches:"+c.id, JSON.stringify(c), false);
+  if(ok){
+    toast("Catch logged.");
+    resetCatchForm();
+    await loadCatches();
+  }
+});
+
+function nearestScore(dateStr){
+  if(!dateStr || !state.scores) return null;
+  const target = new Date(dateStr);
+  let best = null, bestDiff = Infinity;
+  state.scores.forEach(s=>{ const d = Math.abs(s.time - target); if(d < bestDiff){ bestDiff = d; best = s.score; } });
+  return best;
+}
+
+async function loadCatches(){
+  const keys = await storeList("catches:", false);
+  const list = [];
+  for(const k of keys){
+    const v = await storeGet(k, false);
+    if(v){ try{ list.push(JSON.parse(v)); }catch(e){} }
+  }
+  state.catches = list.sort((a,b)=> new Date(b.date) - new Date(a.date));
+  renderCatchList();
+}
+
+function renderCatchList(){
+  const box = $("#catchList");
+  if(!state.catches.length){
+    box.innerHTML = `<div class="empty-state"><p>Your log is empty — hit "Log new catch" after your next trip to start tracking patterns.</p></div>`;
+    return;
+  }
+  box.innerHTML = state.catches.map(c=>{
+    const spot = state.spots.find(s=> s.id === c.spotId);
+    const dims = [c.length ? c.length+'"' : null, c.weight ? c.weight+" lb" : null].filter(Boolean).join(" · ");
+    const stars = "★".repeat(c.rating||0) + "☆".repeat(5-(c.rating||0));
+    return `<div class="list-item">
+      <div class="main">
+        <div class="name">${escapeHtml(c.species)} ${c.bait ? '<span class="tag">'+escapeHtml(c.bait)+'</span>' : ''}</div>
+        <div class="meta">${new Date(c.date).toLocaleString([], {month:'short', day:'numeric', hour:'numeric', minute:'2-digit'})}${spot ? " · "+escapeHtml(spot.name) : ""}${dims ? " · "+dims : ""}${c.scoreAtCatch!==null ? " · Bite score "+c.scoreAtCatch : ""}</div>
+        <div class="meta" style="color:var(--amber);">${stars}</div>
+        ${c.notes ? `<div class="meta">${escapeHtml(c.notes)}</div>` : ""}
+      </div>
+      <div class="actions"><button class="btn small danger" data-delc="${c.id}">Delete</button></div>
+    </div>`;
+  }).join("");
+  box.querySelectorAll("[data-delc]").forEach(btn=>{
+    btn.addEventListener("click", async ()=>{
+      await storeDelete("catches:"+btn.dataset.delc, false);
+      toast("Entry removed.");
+      loadCatches();
+    });
+  });
+}
+
+/* ============================================================
+   BAIT ADVISOR
+============================================================ */
+function currentActivityLevel(){
+  if(!state.scores) return "mid";
+  const now = new Date();
+  let closest = state.scores[0], bestDiff = Infinity;
+  state.scores.forEach(s=>{ const d = Math.abs(s.time-now); if(d<bestDiff){ bestDiff=d; closest=s; } });
+  if(closest.score >= 65) return "high";
+  if(closest.score <= 35) return "low";
+  return "mid";
+}
+
+$("#advisorBtn").addEventListener("click", ()=>{
+  const key = $("#advSpecies").value;
+  const clarity = $("#advClarity").value;
+  const profile = SPECIES[key];
+  const activity = currentActivityLevel();
+  const colors = clarity === "clear" ? profile.colorsClear : clarity === "muddy" ? profile.colorsMuddy : profile.colorsStained;
+  const lures = activity === "high" ? profile.reaction : activity === "low" ? profile.finesse : profile.reaction.slice(0,2).concat(profile.finesse.slice(0,2));
+  const band = scoreBand(activity==="high"?75:activity==="low"?25:50);
+
+  $("#advisorResult").style.display = "block";
+  $("#advisorResult").innerHTML = `
+    <h2 class="section-title" style="margin-top:0;">Recommended for ${profile.label}</h2>
+    <div class="lure-grid">
+      ${lures.map(l=>`<div class="lure-card"><div class="t">Lure / Bait</div><div class="v">${l}</div></div>`).join("")}
+      <div class="lure-card"><div class="t">Color / Profile</div><div class="v">${colors.join(", ")}</div></div>
+      <div class="lure-card"><div class="t">Current activity</div><div class="v" style="color:${band.color};">${band.label}</div></div>
+    </div>
+    <div class="reasoning">${profile.tech[activity]} Water reads as <strong>${clarity}</strong>, which is why these colors are favored — brighter, bolder profiles cut through low visibility, while natural tones blend in when the water's clean.</div>
+  `;
+});
+
+/* ============================================================
+   INIT
+============================================================ */
+async function init(){
+  onLocationChange();
+  initMap();
+  populateCatchSpotOptions();
+  await loadSpots();
+  await loadCatches();
+
+  if(usingLocalFallback){
+    const cb = $("#spotShare");
+    const lbl = cb.nextElementSibling;
+    cb.disabled = true;
+    lbl.textContent = "Community sharing needs the hosted/Claude.ai version — this spot will just be saved to this device.";
+  }
+
+  if("serviceWorker" in navigator && location.protocol.startsWith("http")){
+    window.addEventListener("load", ()=>{
+      navigator.serviceWorker.register("./sw.js").catch(()=>{});
+    });
+  }
+}
+init();
+
+})();
+</script>
+
+</body>
+</html>
