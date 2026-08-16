@@ -196,7 +196,7 @@
   .pill-btn.loading svg{animation:spin 1s linear infinite;}
   @keyframes spin{to{transform:rotate(360deg);}}
 
-  .map-side-float{position:absolute; right:14px; bottom:120px; z-index:15; display:flex; flex-direction:column; gap:10px;}
+  .map-side-float{position:absolute; right:14px; bottom:26px; z-index:15; display:flex; flex-direction:column; gap:10px;}
   .round-btn{
     width:44px; height:44px; border-radius:50%; background:rgba(18,42,45,0.92); backdrop-filter:blur(6px);
     border:1px solid var(--border); color:var(--text); display:flex; align-items:center; justify-content:center;
@@ -206,23 +206,46 @@
   .round-btn:active{transform:scale(0.94);}
 
   .map-legend{
-    position:absolute; left:14px; bottom:120px; z-index:15; background:rgba(18,42,45,0.88); backdrop-filter:blur(6px);
+    position:absolute; left:14px; bottom:26px; z-index:15; background:rgba(18,42,45,0.88); backdrop-filter:blur(6px);
     border:1px solid var(--border); border-radius:var(--radius-sm); padding:8px 10px; font-size:10.5px;
     color:var(--text-dim); display:flex; flex-direction:column; gap:5px; font-family:var(--font-mono);
   }
   .map-legend span{display:flex; align-items:center; gap:6px;}
   .dot-sw{width:8px; height:8px; border-radius:50%; display:inline-block; flex-shrink:0;}
 
-  .sheet{
-    position:absolute; left:0; right:0; bottom:0; height:78%; max-height:78%;
-    background:var(--surface); border-radius:18px 18px 0 0; border-top:1px solid var(--border-soft);
-    box-shadow:0 -10px 30px rgba(0,0,0,0.4); z-index:16; display:flex; flex-direction:column;
-    transform:translateY(0); will-change:transform;
+  /* ---------- Layers popover ---------- */
+  .layers-menu{
+    position:absolute; right:66px; bottom:26px; z-index:18; background:rgba(18,42,45,0.97); backdrop-filter:blur(8px);
+    border:1px solid var(--border); border-radius:var(--radius); padding:10px; width:196px;
+    box-shadow:0 10px 26px rgba(0,0,0,0.45); display:none;
   }
-  .sheet.anim{transition:transform .32s cubic-bezier(.2,.8,.2,1);}
-  @media(min-width:860px){.sheet{height:70%; max-height:70%;}}
-  .sheet-handle{width:38px; height:4px; background:var(--border); border-radius:2px; margin:10px auto 4px; flex-shrink:0;}
-  .sheet-header{padding:2px 14px 10px; border-bottom:1px solid var(--border-soft); flex-shrink:0; touch-action:none;}
+  .layers-menu.open{display:block;}
+  .layers-menu-title{font-size:10px; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-faint); font-family:var(--font-mono); margin:9px 0 6px;}
+  .layers-menu-title:first-child{margin-top:0;}
+  .layer-opt{display:block; width:100%; text-align:left; background:none; border:1px solid transparent; color:var(--text-dim); padding:7px 9px; border-radius:7px; font-size:13px; margin-bottom:2px;}
+  .layer-opt.active{background:var(--surface-2); color:var(--amber); border-color:var(--amber-dim); font-weight:600;}
+  .layer-check{display:flex; align-items:center; gap:8px; font-size:12.5px; color:var(--text-dim); padding:6px 9px; cursor:pointer;}
+  .layer-check input{flex-shrink:0;}
+  .layer-note{font-size:10.5px; color:var(--text-faint); padding:2px 9px 0; line-height:1.5;}
+
+  /* ---------- Panel (click-to-open, no drag) ---------- */
+  .panel-backdrop{position:absolute; inset:0; background:rgba(4,10,11,0.55); z-index:15; opacity:0; pointer-events:none; transition:opacity .22s;}
+  .panel-backdrop.open{opacity:1; pointer-events:auto;}
+  .panel{
+    position:absolute; left:0; right:0; bottom:0; max-height:78%;
+    background:var(--surface); border-radius:18px 18px 0 0; border-top:1px solid var(--border-soft);
+    box-shadow:0 -10px 30px rgba(0,0,0,0.45); z-index:17; display:flex; flex-direction:column;
+    transform:translateY(110%); transition:transform .3s cubic-bezier(.2,.8,.2,1);
+  }
+  .panel.open{transform:translateY(0);}
+  @media(min-width:860px){.panel{max-height:80%; max-width:420px; left:auto; right:14px; bottom:14px; border-radius:16px;}}
+  .panel-header{display:flex; align-items:center; gap:4px; padding:10px 8px 10px 6px; border-bottom:1px solid var(--border-soft); flex-shrink:0;}
+  .panel-title-area{flex:1; min-width:0; padding:0 4px;}
+  .panel-title-text{font-family:var(--font-display); font-weight:600; font-size:15px; padding:8px 6px;}
+  .panel-back, .panel-close{background:none; border:none; color:var(--text-dim); width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:19px;}
+  .panel-back{display:none;}
+  .panel-back:active, .panel-close:active{background:var(--surface-2);}
+  .panel-body{overflow-y:auto; -webkit-overflow-scrolling:touch; padding:12px 16px 30px; flex:1;}
   .sheet-tabs{display:flex; gap:6px;}
   .sheet-tab-btn{
     flex:1; background:var(--surface-2); border:1px solid var(--border-soft); color:var(--text-faint);
@@ -230,7 +253,6 @@
   }
   .sheet-tab-btn span{opacity:0.75; margin-left:2px;}
   .sheet-tab-btn.active{background:var(--surface); color:var(--amber); border-color:var(--amber-dim);}
-  .sheet-body{overflow-y:auto; -webkit-overflow-scrolling:touch; padding:12px 16px 30px; flex:1; touch-action:pan-y;}
   .sheet-panel{display:none;}
   .sheet-panel.active{display:block;}
 
@@ -247,16 +269,33 @@
     margin-top:8px; background:var(--amber); border:none; color:#1a1108; font-weight:600; font-size:12px;
     padding:7px 12px; border-radius:16px; width:100%;
   }
+  .popup-btn.secondary{background:var(--surface-2); color:var(--text); border:1px solid var(--border); margin-top:6px;}
   .popup-title{font-weight:700; font-size:13px; margin-bottom:2px;}
   .popup-body{font-size:12px; color:#3a4a48; line-height:1.5;}
+
+  .hotspot-head{display:flex; align-items:center; gap:10px; margin-bottom:4px;}
+  .hotspot-badge{
+    width:34px; height:34px; border-radius:50% 50% 50% 0; background:var(--green); transform:rotate(-45deg);
+    display:flex; align-items:center; justify-content:center; flex-shrink:0; border:2px solid #16341c;
+  }
+  .hotspot-badge span{transform:rotate(45deg); font-weight:700; font-size:13px;}
+  .hotspot-title{font-family:var(--font-display); font-size:16px; font-weight:700;}
+  .hotspot-coords{font-family:var(--font-mono); font-size:11px; color:var(--text-faint);}
+  .elev-row{display:flex; gap:8px; margin-top:10px;}
+  .elev-chip{flex:1; background:var(--surface-2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:9px 10px;}
+  .elev-chip .v{font-family:var(--font-mono); font-size:14px; font-weight:500;}
+  .elev-chip .k{font-size:9.5px; color:var(--text-faint); text-transform:uppercase; letter-spacing:0.4px; margin-top:2px;}
+
+  .elev-dot-label{background:rgba(10,23,25,0.9); color:#fff; font-family:var(--font-mono); font-size:10px; padding:2px 5px; border-radius:4px; border:none;}
 
   .map-hint{font-size:12px; color:var(--text-faint); margin-top:8px; font-family:var(--font-mono);}
   .inline-form{background:var(--surface-2); border:1px solid var(--border); border-radius:var(--radius); padding:14px; margin-top:12px; display:none;}
   .inline-form.open{display:block;}
-  .inline-form label{display:block; font-size:11.5px; color:var(--text-faint); text-transform:uppercase; letter-spacing:0.4px; margin:10px 0 5px;}
-  .inline-form label:first-child{margin-top:0;}
+  .inline-form label, .advisor-form label{display:block; font-size:11.5px; color:var(--text-faint); text-transform:uppercase; letter-spacing:0.4px; margin:10px 0 5px;}
+  .inline-form label:first-child, .advisor-form label:first-child{margin-top:0;}
   .inline-form input[type=text], .inline-form input[type=number], .inline-form input[type=datetime-local],
-  .inline-form select, .inline-form textarea{
+  .inline-form select, .inline-form textarea,
+  .advisor-form input[type=text], .advisor-form select{
     width:100%; background:var(--bg-alt); border:1px solid var(--border); color:var(--text);
     padding:9px 10px; border-radius:var(--radius-sm); font-size:14px;
   }
@@ -269,8 +308,8 @@
   .list-item{background:var(--surface); border:1px solid var(--border-soft); border-radius:var(--radius-sm); padding:12px; display:flex; justify-content:space-between; gap:10px;}
   .list-item .main{flex:1;}
   .list-item .name{font-weight:600; font-size:14px; display:flex; align-items:center; gap:6px;}
-  .list-item .tag{font-family:var(--font-mono); font-size:9.5px; background:var(--blue-dim); color:#cfeaf4; padding:2px 6px; border-radius:8px;}
-  .list-item .tag.community{background:var(--amber-dim); color:#ffe1c2;}
+  .tag{font-family:var(--font-mono); font-size:9.5px; background:var(--blue-dim); color:#cfeaf4; padding:2px 6px; border-radius:8px;}
+  .tag.community{background:var(--amber-dim); color:#ffe1c2;}
   .list-item .meta{font-size:12px; color:var(--text-dim); margin-top:3px; line-height:1.5;}
   .list-item .actions{display:flex; flex-direction:column; gap:6px;}
 
@@ -418,14 +457,32 @@
     <div class="map-top-float">
       <button class="pill-btn" id="findZonesBtn">
         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l1.8 4.6L18 9l-4.2 1.4L12 15l-1.8-4.6L6 9l4.2-1.4z"/><path d="M19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9z"/></svg>
-        Find good zones here
+        AI Fishing Zones
       </button>
     </div>
 
     <div class="map-side-float">
+      <button class="round-btn" id="layersBtn" title="Map layers">
+        <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l9 5-9 5-9-5 9-5z" stroke-linejoin="round"/><path d="M3 13l9 5 9-5" stroke-linejoin="round"/></svg>
+      </button>
       <button class="round-btn" id="locateBtn" title="My location">
         <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3" stroke-linecap="round"/></svg>
       </button>
+      <button class="round-btn" id="spotsBtn" title="Spots &amp; AI zones">
+        <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16M4 12h16M4 18h10" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+
+    <div class="layers-menu" id="layersMenu">
+      <div class="layers-menu-title">Base map</div>
+      <button class="layer-opt active" data-base="satellite">Satellite</button>
+      <button class="layer-opt" data-base="streets">Streets</button>
+      <button class="layer-opt" data-base="dark">Dark</button>
+      <div class="layers-menu-title">Water overlays</div>
+      <label class="layer-check"><input type="checkbox" id="toggleDepth"> Depth soundings</label>
+      <div class="layer-note">Real nautical data — coverage varies, best on larger/coastal lakes.</div>
+      <label class="layer-check"><input type="checkbox" id="toggleElevation"> Elevation grid</label>
+      <div class="layer-note">Land elevation nearby — steep terrain often means a steep drop-off just offshore.</div>
     </div>
 
     <div class="map-legend" id="mapLegend">
@@ -434,18 +491,20 @@
       <span><i class="dot-sw" style="background:var(--green)"></i>AI zones</span>
     </div>
 
-    <div class="sheet" id="spotSheet">
-      <div class="sheet-handle" id="sheetHandle"></div>
-      <div class="sheet-header" id="sheetHeader">
-        <div class="sheet-tabs" id="sheetTabs">
-          <button class="sheet-tab-btn active" data-sheet="spots">Your Spots <span id="cnt-spots">0</span></button>
-          <button class="sheet-tab-btn" data-sheet="community">Community <span id="cnt-community">0</span></button>
-          <button class="sheet-tab-btn" data-sheet="zones">AI Zones <span id="cnt-zones">0</span></button>
+    <div class="panel-backdrop" id="panelBackdrop"></div>
+    <div class="panel" id="mapPanel">
+      <div class="panel-header">
+        <button class="panel-back" id="panelBack">‹</button>
+        <div class="panel-title-area" id="panelTitleArea">
+          <div class="sheet-tabs" id="sheetTabs">
+            <button class="sheet-tab-btn active" data-sheet="spots">Your Spots <span id="cnt-spots">0</span></button>
+            <button class="sheet-tab-btn" data-sheet="community">Community <span id="cnt-community">0</span></button>
+            <button class="sheet-tab-btn" data-sheet="zones">AI Zones <span id="cnt-zones">0</span></button>
+          </div>
         </div>
+        <button class="panel-close" id="panelClose">✕</button>
       </div>
-      <div class="sheet-body" id="sheetBody">
-
-        <div class="map-hint" style="margin-top:0;">Drag this panel up for the full list, or tap the map to drop a pin.</div>
+      <div class="panel-body" id="panelBody">
 
         <div class="inline-form" id="spotForm">
           <label>Spot name</label>
@@ -463,18 +522,21 @@
         </div>
 
         <div class="sheet-panel active" id="sheetpanel-spots">
+          <div class="map-hint" style="margin-top:0;">Tap the map to drop a pin, or use the ✨ button above to get AI-suggested zones.</div>
           <div class="spot-list" id="spotList"></div>
         </div>
         <div class="sheet-panel" id="sheetpanel-community">
           <div class="spot-list" id="communitySpotList"></div>
         </div>
         <div class="sheet-panel" id="sheetpanel-zones">
-          <div class="map-hint" style="margin-top:0;">Tap "Find good zones here" over the map, zoomed in on a specific lake or pond, to run this.</div>
+          <div class="map-hint" style="margin-top:0;">Tap "AI Fishing Zones" over the map, zoomed in on a specific lake or pond, to run this.</div>
           <div class="chip-row" id="zoneConditions" style="display:none;"></div>
           <div class="map-hint" id="zoneStatus"></div>
           <div class="reasoning" id="zoneMethodology" style="display:none;"></div>
           <div class="spot-list" id="zoneList"></div>
         </div>
+
+        <div class="sheet-panel" id="sheetpanel-hotspot"></div>
 
       </div>
     </div>
@@ -1065,25 +1127,145 @@ async function loadTides(){
 /* ============================================================
    MAP + SPOTS
 ============================================================ */
+const BASE_LAYERS = {};
+
 function initMap(){
   state.map = L.map('map', { zoomControl: true, tap: true, dragging: true, touchZoom: true, bounceAtZoomLimits: false })
     .setView([state.loc.lat, state.loc.lon], 12);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19,
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors'
-  }).addTo(state.map);
+
+  // Satellite is the default base layer — water reads far more clearly against land in imagery
+  // than in a standard street map, which is the whole point for a fishing-focused map.
+  BASE_LAYERS.satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    maxZoom: 19, attribution: 'Imagery &copy; Esri, Maxar, Earthstar Geographics'
+  });
+  BASE_LAYERS.streets = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors'
+  });
+  BASE_LAYERS.dark = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    maxZoom: 19, attribution: '&copy; <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a> &copy; OpenStreetMap contributors'
+  });
+  BASE_LAYERS.satellite.addTo(state.map);
+  state.activeBase = "satellite";
+
+  state.depthLayer = L.tileLayer('https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png', {
+    maxZoom: 18, opacity: 0.9, attribution: '&copy; <a href="https://www.openseamap.org" target="_blank" rel="noopener">OpenSeaMap</a>'
+  });
+  state.elevationGroup = L.layerGroup();
 
   state.map.on('click', (e)=>{
     state.pendingLatLng = e.latlng;
     if(state.marker) state.map.removeLayer(state.marker);
     state.marker = L.marker(e.latlng).addTo(state.map);
-    setSheetTab("spots");
-    setSheet("expanded");
+    openPanel("spots");
     $("#spotForm").classList.add("open");
-    setTimeout(()=> $("#spotName").focus(), 250);
+    setTimeout(()=> $("#spotName").focus(), 200);
   });
 
-  initSheetDrag();
+  initLayersMenu();
+  initPanelControls();
+}
+
+/* ---------- Layers: base style switch + depth soundings + elevation grid ---------- */
+function initLayersMenu(){
+  const btn = $("#layersBtn"), menu = $("#layersMenu");
+  btn.addEventListener("click", (e)=>{
+    e.stopPropagation();
+    menu.classList.toggle("open");
+  });
+  document.addEventListener("click", (e)=>{
+    if(menu.classList.contains("open") && !e.target.closest(".layers-menu") && !e.target.closest("#layersBtn")){
+      menu.classList.remove("open");
+    }
+  });
+  $all(".layer-opt").forEach(opt=>{
+    opt.addEventListener("click", ()=>{
+      const key = opt.dataset.base;
+      if(state.activeBase === key) return;
+      state.map.removeLayer(BASE_LAYERS[state.activeBase]);
+      BASE_LAYERS[key].addTo(state.map);
+      state.activeBase = key;
+      $all(".layer-opt").forEach(o=> o.classList.toggle("active", o === opt));
+    });
+  });
+  $("#toggleDepth").addEventListener("change", (e)=>{
+    if(e.target.checked) state.depthLayer.addTo(state.map);
+    else state.map.removeLayer(state.depthLayer);
+  });
+  $("#toggleElevation").addEventListener("change", (e)=>{
+    if(e.target.checked) loadElevationGrid();
+    else state.elevationGroup.clearLayers();
+  });
+}
+
+async function loadElevationGrid(){
+  state.elevationGroup.clearLayers();
+  state.elevationGroup.addTo(state.map);
+  const b = state.map.getBounds();
+  const nx = 6, ny = 6;
+  const lats = [], lons = [];
+  for(let i=0;i<ny;i++){
+    for(let j=0;j<nx;j++){
+      lats.push(b.getSouth() + (b.getNorth()-b.getSouth()) * (i+0.5)/ny);
+      lons.push(b.getWest() + (b.getEast()-b.getWest()) * (j+0.5)/nx);
+    }
+  }
+  try{
+    const url = `https://api.open-meteo.com/v1/elevation?latitude=${lats.join(",")}&longitude=${lons.join(",")}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    const elevs = data.elevation || [];
+    if(!elevs.length){ toast("Couldn't load elevation data for this view.", true); return; }
+    const min = Math.min(...elevs), max = Math.max(...elevs);
+    elevs.forEach((el, idx)=>{
+      const t = max > min ? (el - min) / (max - min) : 0.5;
+      const color = elevColor(t);
+      const m = L.circleMarker([lats[idx], lons[idx]], { radius: 9, color, fillColor: color, fillOpacity: 0.5, weight: 1, opacity: 0.8 })
+        .bindTooltip(`${Math.round(el)} m / ${Math.round(el*3.281)} ft`, { direction: "top" });
+      state.elevationGroup.addLayer(m);
+    });
+  }catch(e){
+    toast("Couldn't load elevation data right now.", true);
+  }
+}
+
+function elevColor(t){
+  const stops = [[79,163,196],[111,176,122],[232,147,74],[150,95,60]];
+  const seg = Math.min(2, Math.floor(t*3));
+  const lt = (t*3) - seg;
+  const a = stops[seg], c = stops[seg+1];
+  const r = Math.round(a[0] + (c[0]-a[0])*lt);
+  const g = Math.round(a[1] + (c[1]-a[1])*lt);
+  const bch = Math.round(a[2] + (c[2]-a[2])*lt);
+  return `rgb(${r},${g},${bch})`;
+}
+
+/* ---------- Panel: opens only on tap, closes on X / backdrop tap — no drag gesture ---------- */
+function initPanelControls(){
+  $("#spotsBtn").addEventListener("click", ()=> openPanel());
+  $("#panelClose").addEventListener("click", closePanel);
+  $("#panelBackdrop").addEventListener("click", closePanel);
+  $("#panelBack").addEventListener("click", ()=> openPanel("zones"));
+  $all(".sheet-tab-btn").forEach(btn=>{
+    btn.addEventListener("click", ()=> setSheetTab(btn.dataset.sheet));
+  });
+}
+
+function openPanel(tab){
+  $("#panelBackdrop").classList.add("open");
+  $("#mapPanel").classList.add("open");
+  if(tab) setSheetTab(tab);
+}
+function closePanel(){
+  $("#panelBackdrop").classList.remove("open");
+  $("#mapPanel").classList.remove("open");
+}
+
+function setSheetTab(name){
+  $("#panelBack").style.display = "none";
+  $("#sheetTabs").style.display = "flex";
+  $all(".sheet-tab-btn").forEach(b=> b.classList.toggle("active", b.dataset.sheet === name));
+  $all(".sheet-panel").forEach(p=> p.classList.remove("active"));
+  $("#sheetpanel-"+name).classList.add("active");
 }
 
 $("#cancelSpotBtn").addEventListener("click", ()=>{
@@ -1179,7 +1361,7 @@ function renderSpotLists(){
 function flyToPoint(str){
   const [lat,lon] = str.split(",").map(Number);
   state.map.flyTo([lat,lon], 15, { duration: 0.6 });
-  setSheet("peek");
+  closePanel();
 }
 
 let spotMarkers = [];
@@ -1192,77 +1374,6 @@ function plotSpotMarkers(){
       .addTo(state.map).bindPopup(`<strong>${escapeHtml(s.name)}</strong>${s.notes ? "<br>"+escapeHtml(s.notes):""}`);
     spotMarkers.push(m);
   });
-}
-
-/* ---------- Bottom sheet (drag to expand/collapse) ---------- */
-function setSheet(mode){
-  const sheet = $("#spotSheet");
-  sheet.classList.add("anim");
-  sheet.dataset.state = mode;
-  const rect = sheet.getBoundingClientRect();
-  const peekPx = Math.max(0, rect.height - 94);
-  sheet.style.transform = `translateY(${mode === "peek" ? peekPx : 0}px)`;
-  setTimeout(()=> sheet.classList.remove("anim"), 340);
-}
-
-function initSheetDrag(){
-  const sheet = $("#spotSheet");
-  const handleArea = $("#sheetHandle");
-  const headerArea = $("#sheetHeader");
-  setSheet("peek");
-
-  let dragging = false, startY = 0, startPx = 0, moved = false;
-
-  function onDown(e){
-    if(e.target.closest(".sheet-tab-btn")) return; // let tab buttons work normally
-    dragging = true; moved = false;
-    startY = (e.touches ? e.touches[0].clientY : e.clientY);
-    const m = sheet.style.transform.match(/-?\d+(\.\d+)?/);
-    startPx = m ? parseFloat(m[0]) : 0;
-    sheet.classList.remove("anim");
-  }
-  function onMove(e){
-    if(!dragging) return;
-    const y = (e.touches ? e.touches[0].clientY : e.clientY);
-    const dy = y - startY;
-    if(Math.abs(dy) > 6) moved = true;
-    const rect = sheet.getBoundingClientRect();
-    const peekPx = Math.max(0, rect.height - 94);
-    const next = Math.min(peekPx, Math.max(0, startPx + dy));
-    sheet.style.transform = `translateY(${next}px)`;
-  }
-  function onUp(){
-    if(!dragging) return;
-    dragging = false;
-    const rect = sheet.getBoundingClientRect();
-    const peekPx = Math.max(0, rect.height - 94);
-    const m = sheet.style.transform.match(/-?\d+(\.\d+)?/);
-    const cur = m ? parseFloat(m[0]) : 0;
-    if(!moved){
-      setSheet(sheet.dataset.state === "peek" ? "expanded" : "peek");
-    }else{
-      setSheet(cur > peekPx/2 ? "peek" : "expanded");
-    }
-  }
-
-  [handleArea, headerArea].forEach(el=>{
-    el.addEventListener("mousedown", onDown);
-    el.addEventListener("touchstart", onDown, {passive:true});
-  });
-  window.addEventListener("mousemove", onMove);
-  window.addEventListener("touchmove", onMove, {passive:true});
-  window.addEventListener("mouseup", onUp);
-  window.addEventListener("touchend", onUp);
-
-  $all(".sheet-tab-btn").forEach(btn=>{
-    btn.addEventListener("click", ()=> setSheetTab(btn.dataset.sheet));
-  });
-}
-
-function setSheetTab(name){
-  $all(".sheet-tab-btn").forEach(b=> b.classList.toggle("active", b.dataset.sheet === name));
-  $all(".sheet-panel").forEach(p=> p.classList.remove("active"));
-  $("#sheetpanel-"+name).classList.add("active");
 }
 
 /* ---------- Locate me (live tracking dot) ---------- */
@@ -1346,7 +1457,7 @@ async function runZoneFinder(){
   const areaKm2 = bboxAreaKm2(b);
   if(areaKm2 > 55){
     toast("Zoom in closer on a specific lake or pond first.", true);
-    setSheetTab("zones");
+    openPanel("zones");
     statusEl.textContent = `Current view is ~${Math.round(areaKm2)} km² — zoom in until it's under ~55 km² so the scan stays fast and accurate.`;
     return;
   }
@@ -1356,8 +1467,7 @@ async function runZoneFinder(){
   btn.classList.add("loading");
   btn.disabled = true;
   statusEl.textContent = "Scanning shoreline and checking wind…";
-  setSheetTab("zones");
-  setSheet("expanded");
+  openPanel("zones");
 
   const query = `[out:json][timeout:25];(way["natural"="water"](${bbox});way["water"](${bbox});way["waterway"="river"](${bbox});way["waterway"="stream"](${bbox}););out geom;`;
 
@@ -1371,6 +1481,7 @@ async function runZoneFinder(){
     const waterWays = elements.filter(el => el.type === "way" && el.tags && (el.tags.natural === "water" || el.tags.water) && el.geometry && el.geometry.length > 8);
     const waterwayLines = elements.filter(el => el.type === "way" && el.tags && el.tags.waterway && el.geometry && el.geometry.length > 1);
 
+    state.zoneWind = wind || null;
     if(wind){
       renderZoneConditions(wind);
     }
@@ -1534,7 +1645,7 @@ function analyzeShoreline(ring, waterwayLines, wind){
     }
 
     score = score + (type === "Point" ? centrality*10 : 0) + windBoost;
-    results.push({ lat: resampled[i].lat, lon: resampled[i].lon, type, score, windFavored, centrality });
+    results.push({ lat: resampled[i].lat, lon: resampled[i].lon, type, score, windFavored, centrality, outX: outward[0], outY: outward[1] });
   }
   return results;
 }
@@ -1606,10 +1717,12 @@ function plotZoneMarkers(zones){
     const popupId = "zonepop_"+idx;
     const m = L.marker([z.lat, z.lon], { icon, zIndexOffset: 400 })
       .addTo(state.map)
-      .bindPopup(`<div class="popup-title">${info.label} #${idx+1}${z.windFavored?' · wind-favored':''}</div><div class="popup-body">${zoneReasoning(z)}</div><button class="popup-btn" id="${popupId}">Save as my spot</button>`);
+      .bindPopup(`<div class="popup-title">${info.label} #${idx+1}${z.windFavored?' · wind-favored':''}</div><div class="popup-body">${zoneReasoning(z)}</div><button class="popup-btn" id="${popupId}-analyze">Analyze this hotspot</button><button class="popup-btn secondary" id="${popupId}">Save as my spot</button>`);
     m.on("popupopen", ()=>{
-      const btnEl = document.getElementById(popupId);
-      if(btnEl) btnEl.addEventListener("click", ()=> promoteZoneToSpot(z, info.label));
+      const saveBtn = document.getElementById(popupId);
+      if(saveBtn) saveBtn.addEventListener("click", ()=> promoteZoneToSpot(z, info.label));
+      const analyzeBtn = document.getElementById(popupId+"-analyze");
+      if(analyzeBtn) analyzeBtn.addEventListener("click", ()=>{ state.map.closePopup(); openHotspot(z, idx); });
     });
     zoneMarkers.push(m);
   });
@@ -1632,11 +1745,20 @@ function renderZoneList(zones){
         <div class="name">#${idx+1} · ${info.label} ${z.windFavored ? '<span class="tag">WIND</span>' : ''}</div>
         <div class="meta">${z.lat.toFixed(4)}, ${z.lon.toFixed(4)} — ${zoneReasoning(z)}</div>
       </div>
-      <div class="actions"><button class="btn small" data-flyz="${z.lat},${z.lon}">Go to</button></div>
+      <div class="actions">
+        <button class="btn small" data-analyzez="${idx}">Analyze</button>
+        <button class="btn small" data-flyz="${z.lat},${z.lon}">Go to</button>
+      </div>
     </div>`;
   }).join("");
   box.querySelectorAll("[data-flyz]").forEach(btn=>{
     btn.addEventListener("click", ()=> flyToPoint(btn.dataset.flyz));
+  });
+  box.querySelectorAll("[data-analyzez]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const i = parseInt(btn.dataset.analyzez, 10);
+      openHotspot(state.zones[i], i);
+    });
   });
 }
 
@@ -1644,13 +1766,112 @@ function promoteZoneToSpot(zone, label){
   state.pendingLatLng = { lat: zone.lat, lng: zone.lon };
   if(state.marker) state.map.removeLayer(state.marker);
   state.marker = L.marker([zone.lat, zone.lon]).addTo(state.map);
-  setSheetTab("spots");
-  setSheet("expanded");
+  openPanel("spots");
   $("#spotForm").classList.add("open");
   $("#spotName").value = label;
   $("#spotNotes").value = zoneReasoning(zone);
   $("#spotName").focus();
   state.map.closePopup();
+}
+
+/* ---------- Hotspot drill-down: conditions + bank-steepness elevation check + bait advisor ---------- */
+function openHotspot(zone, idx){
+  state.map.flyTo([zone.lat, zone.lon], Math.max(state.map.getZoom(), 15), { duration: 0.5 });
+  renderHotspot(zone, idx);
+  $("#panelBack").style.display = "flex";
+  $("#sheetTabs").style.display = "none";
+  $all(".sheet-panel").forEach(p=> p.classList.remove("active"));
+  $("#sheetpanel-hotspot").classList.add("active");
+  $("#panelBackdrop").classList.add("open");
+  $("#mapPanel").classList.add("open");
+}
+
+function renderHotspot(zone, idx){
+  const info = ZONE_COPY[zone.type];
+  const panel = $("#sheetpanel-hotspot");
+
+  let condHtml = "";
+  if(state.zoneWind){
+    const w = state.zoneWind;
+    condHtml = `<div class="chip-row" style="margin-top:12px;">
+      <div class="chip"><div class="v">${Math.round(w.wind_speed_10m)} mph ${compassLabel(w.wind_direction_10m)}</div><div class="k">Wind</div></div>
+      <div class="chip"><div class="v">${(w.pressure_msl*0.02953).toFixed(2)}"</div><div class="k">Pressure</div></div>
+      <div class="chip"><div class="v">${Math.round(w.cloud_cover)}%</div><div class="k">Cloud</div></div>
+    </div>`;
+  }
+
+  panel.innerHTML = `
+    <div class="hotspot-head">
+      <div class="hotspot-badge"><span>${idx+1}</span></div>
+      <div>
+        <div class="hotspot-title">${info.label}${zone.windFavored?' <span class="tag">WIND</span>':''}</div>
+        <div class="hotspot-coords">${zone.lat.toFixed(5)}, ${zone.lon.toFixed(5)}</div>
+      </div>
+    </div>
+    <div class="reasoning" style="margin-top:10px;">${zoneReasoning(zone)}</div>
+    ${condHtml}
+    <div class="elev-row" id="elevRow">
+      <div class="elev-chip"><div class="v">Checking…</div><div class="k">Bank steepness</div></div>
+    </div>
+    <h2 class="section-title">Bait Advisor for this spot</h2>
+    <div class="advisor-form">
+      <label>Target species</label>
+      <select id="hsSpecies"></select>
+      <label>Water clarity</label>
+      <select id="hsClarity">
+        <option value="clear">Clear</option>
+        <option value="stained">Stained</option>
+        <option value="muddy">Muddy</option>
+      </select>
+    </div>
+    <button class="btn primary" id="hsAdvisorBtn" style="width:100%; margin-top:12px;">Get recommendation</button>
+    <div id="hsAdvisorResult"></div>
+    <div class="form-actions" style="margin-top:16px;">
+      <button class="btn primary" id="hsSaveSpot" style="flex:1;">Save as my spot</button>
+    </div>
+  `;
+
+  const speciesSel = $("#hsSpecies");
+  speciesSel.innerHTML = Object.keys(SPECIES).map(k=> `<option value="${k}">${SPECIES[k].label}</option>`).join("");
+  $("#hsAdvisorBtn").addEventListener("click", ()=>{
+    $("#hsAdvisorResult").innerHTML = buildBaitRecommendationHTML(speciesSel.value, $("#hsClarity").value, currentActivityLevel());
+  });
+  $("#hsSaveSpot").addEventListener("click", ()=> promoteZoneToSpot(zone, info.label));
+
+  fetchBankSteepness(zone).then(res=>{
+    const row = $("#elevRow");
+    if(!row) return; // panel may have moved on by the time this resolves
+    if(!res){
+      row.innerHTML = `<div class="elev-chip"><div class="v">Unavailable</div><div class="k">Bank steepness</div></div>`;
+      return;
+    }
+    row.innerHTML = `
+      <div class="elev-chip"><div class="v">${res.label}</div><div class="k">Bank steepness</div></div>
+      <div class="elev-chip"><div class="v">${res.delta>0?"+":""}${res.delta} m</div><div class="k">Rise over ~60m inland</div></div>
+    `;
+  });
+}
+
+// Real elevation (Open-Meteo DEM) at the shore point vs. ~60m inland along the shoreline's outward
+// normal. A quick-rising bank is a common (not certain) sign of a steep drop-off just offshore.
+async function fetchBankSteepness(zone){
+  if(zone.outX === undefined) return null;
+  try{
+    const offsetM = 60;
+    const dLat = (zone.outY * offsetM) / 111000;
+    const dLon = (zone.outX * offsetM) / (111000 * Math.cos(zone.lat*Math.PI/180));
+    const lat2 = zone.lat + dLat, lon2 = zone.lon + dLon;
+    const url = `https://api.open-meteo.com/v1/elevation?latitude=${zone.lat},${lat2}&longitude=${zone.lon},${lon2}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    const e = data.elevation;
+    if(!e || e.length < 2) return null;
+    const delta = Math.round((e[1]-e[0]) * 10) / 10;
+    let label = "Gradual";
+    if(Math.abs(delta) >= 4) label = "Steep";
+    else if(Math.abs(delta) >= 1.5) label = "Moderate";
+    return { delta, label };
+  }catch(err){ return null; }
 }
 
 function escapeHtml(str){
@@ -1784,18 +2005,13 @@ function currentActivityLevel(){
   return "mid";
 }
 
-$("#advisorBtn").addEventListener("click", ()=>{
-  const key = $("#advSpecies").value;
-  const clarity = $("#advClarity").value;
+function buildBaitRecommendationHTML(key, clarity, activity){
   const profile = SPECIES[key];
-  const activity = currentActivityLevel();
   const colors = clarity === "clear" ? profile.colorsClear : clarity === "muddy" ? profile.colorsMuddy : profile.colorsStained;
   const lures = activity === "high" ? profile.reaction : activity === "low" ? profile.finesse : profile.reaction.slice(0,2).concat(profile.finesse.slice(0,2));
   const band = scoreBand(activity==="high"?75:activity==="low"?25:50);
-
-  $("#advisorResult").style.display = "block";
-  $("#advisorResult").innerHTML = `
-    <h2 class="section-title" style="margin-top:0;">Recommended for ${profile.label}</h2>
+  return `
+    <h2 class="section-title" style="margin-top:16px;">Recommended for ${profile.label}</h2>
     <div class="lure-grid">
       ${lures.map(l=>`<div class="lure-card"><div class="t">Lure / Bait</div><div class="v">${l}</div></div>`).join("")}
       <div class="lure-card"><div class="t">Color / Profile</div><div class="v">${colors.join(", ")}</div></div>
@@ -1803,6 +2019,11 @@ $("#advisorBtn").addEventListener("click", ()=>{
     </div>
     <div class="reasoning">${profile.tech[activity]} Water reads as <strong>${clarity}</strong>, which is why these colors are favored — brighter, bolder profiles cut through low visibility, while natural tones blend in when the water's clean.</div>
   `;
+}
+
+$("#advisorBtn").addEventListener("click", ()=>{
+  $("#advisorResult").style.display = "block";
+  $("#advisorResult").innerHTML = buildBaitRecommendationHTML($("#advSpecies").value, $("#advClarity").value, currentActivityLevel());
 });
 
 /* ============================================================
